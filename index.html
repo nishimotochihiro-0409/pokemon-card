@@ -161,105 +161,84 @@ window.readDeckCode=function(){const code=document.getElementById('deckCode').va
 })();
 </script><script id="catalog-script">(function(){const key='pokemon-card-catalog-v1';function get(){try{const x=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(x)?x:[]}catch(e){return []}}function txt(tag,v){const n=document.createElement(tag);n.textContent=String(v??'');return n}function add(p,k,v){if(v!==undefined&&v!==null&&v!=='')p.append(txt('p',k+String(v)))}window.renderCatalog=function(){const all=get(),q=document.getElementById('catalogQuery').value.toLowerCase(),reg=document.getElementById('catalogReg').value,root=document.getElementById('catalogResults');document.getElementById('catalogCount').textContent=all.length;root.replaceChildren();const cards=all.filter(c=>(!reg||c.regulation===reg)&&((c.name||'').toLowerCase().includes(q)||(c.id||'').toLowerCase().includes(q))).slice(0,100);if(!cards.length){root.append(txt('p',all.length?'一致するカードがありません':'登録データはまだありません。公式検索で確認し、JSON取り込みから追加できます。'));return}for(const c of cards){const box=txt('article','');box.className='catalog-card';box.append(txt('h3',c.name));add(box,'番号：',c.id);add(box,'レギュレーション：',c.regulation);add(box,'HP：',c.hp);add(box,'種類：',c.type);add(box,'弱点：',c.weakness);add(box,'にげる：',c.retreat);const d=txt('details',''),summary=txt('summary','ワザ・特性・効果');d.append(summary);if(c.ability){add(d,'特性：',c.ability.name);add(d,'効果：',c.ability.effect)}if(Array.isArray(c.attacks))for(const a of c.attacks){add(d,'ワザ：',a.name);add(d,'必要エネルギー：',Array.isArray(a.cost)?a.cost.join('・'):a.cost);add(d,'ダメージ：',a.damage);add(d,'効果：',a.effect)}add(d,'効果：',c.effect);box.append(d);root.append(box)}};window.importCatalog=function(){const out=document.getElementById('catalogMessage');let data;try{data=JSON.parse(document.getElementById('catalogJson').value)}catch(e){out.textContent='JSONの書式が正しくありません';return}if(!Array.isArray(data)||data.length>10000||data.some(c=>!c||typeof c.id!=='string'||!c.id.trim()||typeof c.name!=='string'||!c.name.trim()||!['H','I','J','exception'].includes(c.regulation))){out.textContent='配列形式で、各カードにid・name・regulation（H/I/J/exception）を指定してください';return}const map=new Map(get().map(c=>[c.id,c]));for(const c of data)map.set(c.id,{...c,verified:false});try{localStorage.setItem(key,JSON.stringify([...map.values()]));out.textContent=data.length+'件を取り込みました（公式未検証）';renderCatalog()}catch(e){out.textContent='保存に失敗しました。端末の容量を確認してください'}};window.exportCatalog=function(){const u=URL.createObjectURL(new Blob([JSON.stringify(get(),null,2)],{type:'application/json'})),a=document.createElement('a');a.href=u;a.download='pokemon-card-catalog.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)};renderCatalog()})();</script><style id="catalog-image-fix">.catalog-live{padding:14px;background:#f5f0ff;border-radius:12px;margin:12px 0}.catalog-live h3{margin:0 0 12px}.catalog-search-row{display:flex;align-items:stretch;gap:8px}.catalog-search-row input{flex:1;min-width:0;margin:0}.catalog-search-row button{flex:0 0 auto;min-width:80px}.catalog-local{margin:12px 0;padding:10px;border:1px solid #e7dff1;border-radius:12px}.catalog-card .card-image{width:100%;height:220px;object-fit:contain;display:block}.catalog-card .card-image-missing{height:145px;display:flex;align-items:center;justify-content:center;background:#eee9f5;border-radius:8px;color:#6c627d;font-size:12px;text-align:center}.catalog-card{min-width:0}.catalog-card h3{overflow-wrap:anywhere}@media(max-width:600px){.catalog-search-row button{min-width:65px}.catalog-live{padding:10px}}</style><style id="online-autocomplete-style">.catalog-live{position:relative}.online-suggest-box{position:absolute;z-index:40;left:14px;right:14px;top:100px;max-height:260px;overflow-y:auto;background:white;border:1px solid #cfc6e7;border-radius:10px;box-shadow:0 8px 18px #0002}.online-suggest-box[hidden]{display:none}.online-suggest-box button{display:block;width:100%;text-align:left;background:white;border:0;border-bottom:1px solid #eee;padding:10px 12px;color:#242036;cursor:pointer}.online-suggest-box button:hover,.online-suggest-box button:focus{background:#f3efff}</style><script id="online-search-v1">
 (function(){
-let fetched=[],page=1,last='',seq=0,timer=0,suggestSeq=0,total=NaN;
+'use strict';
 const api='https://pokemontcg.jacobcorbett.com/api/v1/cards';
-const input=()=>document.getElementById('onlineQuery');
-const status=()=>document.getElementById('onlineStatus');
-const results=()=>document.getElementById('onlineResults');
-const more=()=>document.getElementById('onlineNext');
-const namesBox=()=>document.getElementById('onlineSuggestBox');
-const starters=['ピカチュウ','ピカチュウex','リーリエの決心','リーリエのピッピex','リザードン','リザードンex','ミュウ','ミュウex','ドラパルトex','ゲンガー','ルカリオ','サーナイトex'];
-function renderSuggestions(names){
-const box=namesBox();box.replaceChildren();
-for(const name of [...new Set(names)].slice(0,12)){
-const b=document.createElement('button');b.type='button';b.textContent=name;b.setAttribute('role','option');
-b.onclick=()=>{input().value=name;box.hidden=true;input().setAttribute('aria-expanded','false');window.onlineSearch()};box.append(b)
+const $=id=>document.getElementById(id);
+const preset=['ピカチュウ','ピカチュウex','リーリエの決心','リーリエのピッピex','リザードン','リザードンex','ミュウ','ミュウex','ドラパルトex','サーナイトex'];
+let cards=[],page=1,last='',searchToken=0,suggestToken=0,typingTimer=0,total=null;
+function suggest(names){
+ const box=$('onlineSuggestBox');box.replaceChildren();
+ for(const name of [...new Set(names)].slice(0,12)){
+  const b=document.createElement('button');b.type='button';b.textContent=name;b.setAttribute('role','option');
+  b.addEventListener('click',()=>{$('onlineQuery').value=name;suggest([]);window.onlineSearch()});box.append(b);
+ }
+ box.hidden=box.childElementCount===0;$('onlineQuery').setAttribute('aria-expanded',String(!box.hidden));
 }
-box.hidden=!box.children.length;input().setAttribute('aria-expanded',box.hidden?'false':'true')
-}
-async function suggest(){
-const q=input().value.trim(),id=++suggestSeq;if(!q){renderSuggestions([]);return}
-const known=[...starters,...fetched.map(c=>c.name).filter(Boolean)].filter(n=>n.includes(q));
-renderSuggestions(known);
-try{
-const url=new URL(api);url.searchParams.set('language','jp');url.searchParams.set('q',q);url.searchParams.set('limit','40');url.searchParams.set('page','1');
-const response=await fetch(url);if(!response.ok)return;
-const data=await response.json();if(id!==suggestSeq)return;
-renderSuggestions([...known,...(Array.isArray(data.data)?data.data:[]).map(c=>c.name).filter(n=>typeof n==='string'&&n.includes(q))]);
-}catch(e){}
-}
-window.scheduleOnlineSearch=function(){clearTimeout(timer);suggest();timer=setTimeout(()=>window.onlineSearch(),700)};
-document.addEventListener('click',e=>{if(!e.target.closest('.catalog-search-row')&&!e.target.closest('#onlineSuggestBox'))renderSuggestions([])});
-function match(c){
-const reg=document.getElementById('filterReg').value,kind=document.getElementById('filterKind').value,type=document.getElementById('filterType').value,hp=document.getElementById('filterHp').value,effect=document.getElementById('filterEffect').value;
-const r=String(c.regulation||c.regulationMark||c.regulation_mark||c.set?.regulation||'').toUpperCase();
-const k=String(c.supertype||c.cardType||c.card_type||c.category||c.type||'').toLowerCase();
-const t=[c.types,c.pokemonType,c.pokemon_type,c.element,c.energyType,c.type].flat().filter(Boolean).join(' ').toLowerCase();
-const kinds={pokemon:/pokemon|pokémon|ポケモン/i,trainer:/trainer|supporter|item|stadium|tool|トレーナ|サポート|グッズ|スタジアム|どうぐ/i,energy:/energy|エネルギー/i};
-return (!reg||r===reg)&&(!kind||kinds[kind].test(k))&&(!type||t.includes(type)||t.includes(({草:'grass',炎:'fire',水:'water',雷:'lightning',超:'psychic',闘:'fighting',悪:'darkness',鋼:'metal',無色:'colorless',ドラゴン:'dragon',フェアリー:'fairy'})[type]))&&(!hp||Number(c.hp)>=Number(hp))&&(!effect||(effect==='ability'?Boolean((c.abilities||[]).length||c.ability):Boolean((c.attacks||c.attack||[]).length)));
-}
-window.filterOnlineCards=function(){
-let shown=0;document.querySelectorAll('#onlineResults article').forEach((el,i)=>{const ok=!!fetched[i]&&match(fetched[i]);el.hidden=!ok;if(ok)shown++});
-status().textContent=fetched.length?'条件に合うカード：'+shown+'件（取得済み '+fetched.length+'件'+(Number.isFinite(total)?'／検索全体 '+total+'件':'')+'）':'';
-};
-window.onlineSearch=async function(next=false){
-clearTimeout(timer);const q=input().value.trim();if(!q){seq++;last='';fetched=[];results().replaceChildren();more().hidden=true;status().textContent='';return}
-if(!next||q!==last){last=q;page=1;fetched=[];total=NaN;results().replaceChildren()}
-const id=++seq;more().hidden=true;status().textContent='検索中…';
-try{
-let hasMore=true;
-for(let tries=0;tries<8&&hasMore;tries++){
-const u=new URL(api);u.searchParams.set('language','jp');u.searchParams.set('q',q);u.searchParams.set('limit','20');u.searchParams.set('page',String(page));
-const response=await fetch(u);if(!response.ok)throw Error('HTTP '+response.status);
-const body=await response.json();if(id!==seq)return;
-const cards=Array.isArray(body.data)?body.data:[];total=body.total===undefined?NaN:Number(body.total);
-for(const c of cards){if(typeof c.name==='string'&&c.name.includes(q))names.add(c.name)}
-showSuggest([...names]);
-if(cards.length<20)break;
-}
-}catch(e){if(id===suggestId)showSuggest([...names])}
+async function updateSuggestions(){
+ const q=$('onlineQuery').value.trim(),token=++suggestToken;
+ if(!q){suggest([]);return}
+ const local=[...preset,...cards.map(c=>c.name).filter(Boolean)].filter(n=>n.includes(q));
+ suggest(local);
+ try{
+  const u=new URL(api);u.searchParams.set('language','jp');u.searchParams.set('q',q);u.searchParams.set('limit','40');
+  const res=await fetch(u);if(!res.ok)return;
+  const json=await res.json();if(token!==suggestToken)return;
+  suggest([...local,...(Array.isArray(json.data)?json.data:[]).map(c=>c.name).filter(n=>typeof n==='string'&&n.includes(q))]);
+ }catch(e){}
 }
 window.scheduleOnlineSearch=function(){
-clearTimeout(debounceId);clearTimeout(suggestTimer);
-suggestTimer=setTimeout(suggestCards,180);
-debounceId=setTimeout(()=>window.onlineSearch(),650);
+ clearTimeout(typingTimer);updateSuggestions();typingTimer=setTimeout(()=>window.onlineSearch(),750);
 };
-document.addEventListener('click',e=>{if(!e.target.closest('.catalog-search-row')&&!e.target.closest('#onlineSuggestBox'))showSuggest([])});
-function getReg(c){return String(c.regulation||c.regulationMark||c.regulation_mark||c.set?.regulation||c.set?.regulationMark||'').trim().toUpperCase()}
-function match(c){
-const reg=document.getElementById('filterReg').value,kind=document.getElementById('filterKind').value,type=document.getElementById('filterType').value,hp=document.getElementById('filterHp').value,effect=document.getElementById('filterEffect').value;
-const k=String(c.supertype||c.cardType||c.card_type||c.category||c.type||'').toLowerCase();
-const t=[c.types,c.pokemonType,c.pokemon_type,c.element,c.energyType,c.type].flat().filter(Boolean).join(' ').toLowerCase();
-const kinds={pokemon:/pokemon|pokémon|ポケモン/i,trainer:/trainer|supporter|item|stadium|tool|トレーナ|サポート|グッズ|スタジアム|どうぐ/i,energy:/energy|エネルギー/i};
-return (!reg||getReg(c)===reg)&&(!kind||kinds[kind].test(k))&&(!type||t.includes(type)||t.includes(({草:'grass',炎:'fire',水:'water',雷:'lightning',超:'psychic',闘:'fighting',悪:'darkness',鋼:'metal',無色:'colorless',ドラゴン:'dragon',フェアリー:'fairy'})[type]))&&(!hp||Number(c.hp)>=Number(hp))&&(!effect||(effect==='ability'?Boolean((c.abilities||[]).length||c.ability):Boolean((c.attacks||c.attack||[]).length)));
+document.addEventListener('click',e=>{if(!e.target.closest('.catalog-search-row')&&!e.target.closest('#onlineSuggestBox'))suggest([])});
+function matches(c){
+ const reg=$('filterReg').value,kind=$('filterKind').value,type=$('filterType').value,hp=$('filterHp').value,effect=$('filterEffect').value;
+ const r=String(c.regulation||c.regulationMark||c.regulation_mark||c.set?.regulation||'').toUpperCase();
+ const k=String(c.supertype||c.cardType||c.card_type||c.category||c.type||'').toLowerCase();
+ const t=[c.types,c.pokemonType,c.pokemon_type,c.element,c.energyType,c.type].flat().filter(Boolean).join(' ').toLowerCase();
+ const types={草:'grass',炎:'fire',水:'water',雷:'lightning',超:'psychic',闘:'fighting',悪:'darkness',鋼:'metal',無色:'colorless',ドラゴン:'dragon',フェアリー:'fairy'};
+ const kinds={pokemon:/pokemon|pokémon|ポケモン/i,trainer:/trainer|supporter|item|stadium|tool|トレーナ|サポート|グッズ|スタジアム|どうぐ/i,energy:/energy|エネルギー/i};
+ return (!reg||r===reg)&&(!kind||kinds[kind].test(k))&&(!type||t.includes(type.toLowerCase())||t.includes(types[type]))&&(!hp||Number(c.hp)>=Number(hp))&&(!effect||(effect==='ability'?Boolean(c.ability||(c.abilities||[]).length):Boolean((c.attacks||c.attack||[]).length)));
 }
 window.filterOnlineCards=function(){
-let visible=0;
-document.querySelectorAll('#onlineResults article').forEach((box,i)=>{const yes=!!fetched[i]&&match(fetched[i]);box.hidden=!yes;if(yes)visible++});
-const total=window.onlineSearchTotal;
-document.getElementById('onlineStatus').textContent='条件に合うカード '+visible+'件を表示（取得 '+fetched.length+'件'+(Number.isFinite(total)?'／検索結果 '+total+'件':'')+'）。'+(visible===0&&fetched.length?'まだ一致するカードが見つかっていません。':'');
+ let count=0;document.querySelectorAll('#onlineResults article').forEach((el,i)=>{const ok=!!cards[i]&&matches(cards[i]);el.hidden=!ok;if(ok)count++});
+ $('onlineStatus').textContent=cards.length?'条件に合うカード '+count+'件（取得済み '+cards.length+'件'+(Number.isFinite(total)?'／検索全体 '+total+'件':'')+'）':'';
 };
-window.onlineSearch=async function(next=false){
-clearTimeout(debounceId);
-const q=document.getElementById('onlineQuery').value.trim(),out=document.getElementById('onlineResults'),msg=document.getElementById('onlineStatus'),more=document.getElementById('onlineNext');
-if(!q){requestId++;last='';fetched=[];out.replaceChildren();msg.textContent='カード名を入力すると検索します';more.hidden=true;return}
-if(!next||q!==last){page=1;last=q;fetched=[];window.onlineSearchTotal=undefined;out.replaceChildren()}
-const current=++requestId;more.hidden=true;msg.textContent='検索中…';
-try{
-let morePages=true,loops=0;
-while(morePages&&loops<30){
-const u=new URL('https://pokemontcg.jacobcorbett.com/api/v1/cards');
-u.searchParams.set('language','jp');u.searchParams.set('q',q);u.searchParams.set('limit','20');u.searchParams.set('page',String(page));
-const res=await fetch(u);if(!res.ok)throw Error('HTTP '+res.status);
-const body=await res.json(),cards=Array.isArray(body.data)?body.data:[];
-if(current!==requestId)return;
-
-page++;hasMore=cards.length===20&&(!Number.isFinite(total)||fetched.length<total);
-window.filterOnlineCards();
-if(fetched.some(match))break;
+function addCard(c){
+ const box=document.createElement('article');box.className='catalog-card';
+ const candidates=[c.imageUrl,c.originalImageUrl,c.image_url,c.image,c.images?.large,c.images?.small,c.imageUrls?.large,c.imageUrls?.small].filter(v=>typeof v==='string'&&v);
+ const img=document.createElement('img');img.className='card-image';img.alt=c.name||'カード';img.loading='lazy';
+ let index=0;
+ img.onerror=()=>{if(index<candidates.length){img.src=candidates[index++]}else{img.replaceWith(document.createTextNode('画像なし'))}};
+ box.append(img);if(candidates.length)img.src=candidates[index++];else img.replaceWith(document.createTextNode('画像なし'));
+ const title=document.createElement('h3');title.textContent=c.name||'カード名不明';box.append(title);
+ for(const [key,value] of [['番号',c.number||c.id],['HP',c.hp],['レギュレーション',c.regulation||c.regulationMark]]){
+  if(value!==undefined&&value!==null){const p=document.createElement('p');p.textContent=key+'：'+value;box.append(p)}
+ }
+ const details=document.createElement('details'),summary=document.createElement('summary');summary.textContent='ワザ・特性・効果';details.append(summary);
+ for(const a of c.abilities||[]){const p=document.createElement('p');p.textContent='特性 '+(a.name||'')+'：'+(a.text||a.effect||'');details.append(p)}
+ for(const a of c.attacks||[]){const p=document.createElement('p');p.textContent='ワザ '+(a.name||'')+' '+(a.damage||'')+'：'+(a.text||a.effect||'');details.append(p)}
+ box.append(details);$('onlineResults').append(box);
 }
-more().hidden=!hasMore;
-}catch(e){if(id===seq)status().textContent='検索できませんでした：'+e.message}
+window.onlineSearch=async function(next=false){
+ clearTimeout(typingTimer);
+ const q=$('onlineQuery').value.trim(),token=++searchToken;
+ if(!q){cards=[];last='';$('onlineResults').replaceChildren();$('onlineStatus').textContent='';$('onlineNext').hidden=true;return}
+ if(!next||q!==last){cards=[];page=1;last=q;total=null;$('onlineResults').replaceChildren()}
+ $('onlineStatus').textContent='検索中…';$('onlineNext').hidden=true;
+ try{
+  let hasMore=false;
+  for(let i=0;i<8;i++){
+   const u=new URL(api);u.searchParams.set('language','jp');u.searchParams.set('q',q);u.searchParams.set('limit','20');u.searchParams.set('page',String(page));
+   const res=await fetch(u);if(!res.ok)throw Error('HTTP '+res.status);
+   const json=await res.json();if(token!==searchToken)return;
+   const batch=Array.isArray(json.data)?json.data:[];total=Number.isFinite(Number(json.total))?Number(json.total):null;
+   for(const c of batch){cards.push(c);addCard(c)}
+   page++;hasMore=batch.length===20&&(total===null||cards.length<total);
+   window.filterOnlineCards();
+   if(!hasMore||cards.some(matches))break;
+  }
+  $('onlineNext').hidden=!hasMore;
+ }catch(e){if(token===searchToken)$('onlineStatus').textContent='検索エラー：'+e.message}
 };
 })();
 </script></html>
