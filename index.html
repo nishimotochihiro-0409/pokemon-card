@@ -164,7 +164,7 @@ window.readDeckCode=function(){const code=document.getElementById('deckCode').va
 'use strict';
 const api='https://pokemontcg.jacobcorbett.com/api/v1/cards';
 const $=id=>document.getElementById(id);
-const preset=['ピカチュウ','ピカチュウex','リーリエの決心','リーリエのピッピex','リザードン','リザードンex','ミュウ','ミュウex','ドラパルトex','サーナイトex'];
+const preset=['ピカチュウ','ピカチュウex','リーリエの決心','リーリエのピッピex','リザードン','リザードンex','ミュウ','ミュウex','ドラパルトex','サーナイトex','マシマシラ','マシマシラex'];
 let cards=[],page=1,last='',searchToken=0,suggestToken=0,typingTimer=0,total=null;
 function normalizeName(v){return String(v||'').normalize('NFKC').replace(/[ぁ-ゖ]/g,ch=>String.fromCharCode(ch.charCodeAt(0)+96)).toLowerCase()}
 function suggest(names){
@@ -181,7 +181,7 @@ async function updateSuggestions(){
  const local=[...preset,...cards.map(c=>c.name).filter(Boolean)].filter(n=>normalizeName(n).includes(normalizeName(q)));
  suggest(local);
  try{
-  const u=new URL(api);u.searchParams.set('language','jp');u.searchParams.set('q',q);u.searchParams.set('limit','40');
+  const u=new URL(api);u.searchParams.set('language','jp');u.searchParams.set('q',normalizeName(q));u.searchParams.set('limit','100');
   const res=await fetch(u);if(!res.ok)return;
   const json=await res.json();if(token!==suggestToken)return;
   suggest([...local,...(Array.isArray(json.data)?json.data:[]).map(c=>c.name).filter(n=>typeof n==='string'&&normalizeName(n).includes(normalizeName(q)))]);
@@ -229,7 +229,7 @@ window.onlineSearch=async function(next=false){
  try{
   let hasMore=false;
   for(let i=0;i<8;i++){
-   const u=new URL(api);u.searchParams.set('language','jp');u.searchParams.set('q',q);u.searchParams.set('limit','20');u.searchParams.set('page',String(page));
+   const u=new URL(api);u.searchParams.set('language','jp');u.searchParams.set('q',normalizeName(q));u.searchParams.set('limit','20');u.searchParams.set('page',String(page));
    const res=await fetch(u);if(!res.ok)throw Error('HTTP '+res.status);
    const json=await res.json();if(token!==searchToken)return;
    const batch=Array.isArray(json.data)?json.data:[];total=Number.isFinite(Number(json.total))?Number(json.total):null;
