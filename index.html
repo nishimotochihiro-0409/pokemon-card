@@ -165,7 +165,8 @@ window.readDeckCode=function(){const code=document.getElementById('deckCode').va
 const api='https://pokemontcg.jacobcorbett.com/api/v1/cards';
 const $=id=>document.getElementById(id);
 const preset=['ピカチュウ','ピカチュウex','リーリエの決心','リーリエのピッピex','リザードン','リザードンex','ミュウ','ミュウex','ドラパルトex','サーナイトex','マシマシラ','マシマシラex'];
-let cards=[],page=1,last='',searchToken=0,suggestToken=0,typingTimer=0,total=null;
+let cards=[],page=1,last='',searchToken=0,suggestToken=0,typingTimer=0,total=null,indexNames=[];
+fetch('data/card-names.json?refresh=1').then(r=>{if(!r.ok)throw Error('No index');return r.json()}).then(data=>{indexNames=Array.isArray(data.names)?data.names:[];if($('onlineQuery').value.trim())updateSuggestions()}).catch(()=>{});
 function normalizeName(v){return String(v||'').normalize('NFKC').replace(/[ぁ-ゖ]/g,ch=>String.fromCharCode(ch.charCodeAt(0)+96)).toLowerCase()}
 function suggest(names){
  const box=$('onlineSuggestBox');box.replaceChildren();
@@ -178,7 +179,7 @@ function suggest(names){
 async function updateSuggestions(){
  const q=$('onlineQuery').value.trim(),token=++suggestToken;
  if(!q){suggest([]);return}
- const local=[...preset,...cards.map(c=>c.name).filter(Boolean)].filter(n=>normalizeName(n).includes(normalizeName(q)));
+ const local=[...indexNames,...preset,...cards.map(c=>c.name).filter(Boolean)].filter(n=>normalizeName(n).includes(normalizeName(q))).slice(0,60);
  suggest(local);
  try{
   const u=new URL(api);u.searchParams.set('language','jp');u.searchParams.set('q',normalizeName(q));u.searchParams.set('limit','100');
