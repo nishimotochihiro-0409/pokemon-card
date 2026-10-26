@@ -165,21 +165,21 @@ let page=1,last='';let fetched=[];
 window.filterOnlineCards=function(){
 const reg=document.getElementById('filterReg').value,kind=document.getElementById('filterKind').value,type=document.getElementById('filterType').value,hp=document.getElementById('filterHp').value,effect=document.getElementById('filterEffect').value;
 const boxes=document.querySelectorAll('#onlineResults article');
-let visible=0;
+let visible=0,unknownReg=0;
 boxes.forEach((box,i)=>{const c=fetched[i];if(!c)return;
-const r=String(c.regulation||c.regulationMark||c.regulation_mark||'').toUpperCase();
+const r=String(c.regulation||c.regulationMark||c.regulation_mark||c.set?.regulation||c.set?.regulationMark||'').trim().toUpperCase();
 const k=String(c.supertype||c.cardType||c.card_type||c.category||c.type||'').toLowerCase();
 const t=[c.types,c.pokemonType,c.pokemon_type,c.element,c.energyType,c.type].flat().filter(Boolean).join(' ');
 const kinds={pokemon:/pokemon|pokémon|ポケモン/i,trainer:/trainer|supporter|item|stadium|tool|トレーナ|サポート|グッズ|スタジアム|どうぐ/i,energy:/energy|エネルギー/i};
 const pass=(!reg||r===reg)&&(!kind||kinds[kind].test(k))&&(!type||t.includes(type)||t.toLowerCase().includes(({草:'grass',炎:'fire',水:'water',雷:'lightning',超:'psychic',闘:'fighting',悪:'darkness',鋼:'metal',無色:'colorless',ドラゴン:'dragon',フェアリー:'fairy'})[type]))&&(!hp||Number(c.hp)>=Number(hp))&&(!effect||(effect==='ability'?Boolean((c.abilities||[]).length||c.ability):Boolean((c.attacks||c.attack||[]).length)));
-box.hidden=!pass;if(pass)visible++;
+box.hidden=!pass;if(pass)visible++;if(reg&&!r)unknownReg++;
 });
-document.getElementById('onlineStatus').textContent='絞り込み結果：'+visible+'件（取得済み '+fetched.length+'件）';
+const total=Number(window.onlineSearchTotal);const totalText=Number.isFinite(total)&&total>=fetched.length?'／検索全体 '+total+'件':'';document.getElementById('onlineStatus').textContent='読み込み済み '+fetched.length+'件'+totalText+' のうち条件一致 '+visible+'件'+(unknownReg?'（レギュレーション不明 '+unknownReg+'件は除外）':'')+'。全検索結果の一致件数ではありません。';
 };
 window.onlineSearch=async function(next=false){
 const q=document.getElementById('onlineQuery').value.trim(),out=document.getElementById('onlineResults'),msg=document.getElementById('onlineStatus'),more=document.getElementById('onlineNext');
 if(!q){msg.textContent='カード名を入力してね';return}
-if(!next||q!==last){page=1;last=q;fetched=[];out.replaceChildren()}
+if(!next||q!==last){page=1;last=q;fetched=[];window.onlineSearchTotal=undefined;out.replaceChildren()}
 more.hidden=true;msg.textContent='取得中…';
 try{
 const u=new URL('https://pokemontcg.jacobcorbett.com/api/v1/cards');
@@ -203,9 +203,9 @@ for(const a of c.abilities||[]){const p=document.createElement('p');p.textConten
 for(const a of c.attacks||c.attack||[]){const p=document.createElement('p');p.textContent='ワザ '+(a.name||'')+' '+(a.damage||'')+'：'+(a.text||a.effect||'');detail.append(p)}
 if(c.effect){const p=document.createElement('p');p.textContent=String(c.effect);detail.append(p)}
 box.append(detail);out.append(box)}
-msg.textContent=cards.length?'表示中：'+out.children.length+'件':'該当するカードがありません';
+const total=body.total===undefined?NaN:Number(body.total);window.onlineSearchTotal=total;
 window.filterOnlineCards();
-const total=Number(body.total);more.hidden=cards.length<20||(Number.isFinite(total)&&page*20>=total);page++;
+more.hidden=cards.length<20||(Number.isFinite(total)&&page*20>=total);page++;
 }catch(e){msg.textContent='APIに接続できませんでした：'+e.message}
 };
 })();
