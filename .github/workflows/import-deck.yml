@@ -1,0 +1,31 @@
+name: Import official deck code
+on:
+  workflow_dispatch:
+    inputs:
+      deck_code:
+        description: "Official deck code (e.g. kFkbdF-8POJ3c-kVV5bV)"
+        required: true
+        type: string
+permissions:
+  contents: write
+jobs:
+  import-deck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Fetch and validate 60-card deck
+        env:
+          DECK_CODE: ${{ inputs.deck_code }}
+        run: python scripts/import_deck.py "$DECK_CODE"
+      - name: Commit deck data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/decks/
+          if ! git diff --cached --quiet; then
+            git commit -m "Import official deck data"
+            git push
+          fi
