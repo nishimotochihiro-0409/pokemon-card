@@ -207,11 +207,28 @@ window.filterOnlineCards=function(){
 };
 function addCard(c){
  const box=document.createElement('article');box.className='catalog-card';
- const candidates=[c.imageUrl,c.originalImageUrl,c.image_url,c.image,c.images?.large,c.images?.small,c.imageUrls?.large,c.imageUrls?.small].filter(v=>typeof v==='string'&&v);
- const img=document.createElement('img');img.className='card-image';img.alt=c.name||'カード';img.loading='lazy';
+ const imageValues=[c.imageUrl,c.originalImageUrl,c.image_url,c.image,c.images,c.imageUrls,c.image_path,c.imagePath,c.image_url_large,c.image_url_small,c.cardImage,c.card_image,c.thumbnail,c.thumbnailUrl,c.picture,c.pictureUrl];
+ const candidates=[];
+ function collect(v){
+  if(typeof v==='string'&&v.trim()){
+   const raw=v.trim();try{
+    const url=new URL(raw,'https://pokemontcg.jacobcorbett.com/');
+    if(url.protocol==='https:'||url.protocol==='http:')candidates.push(url.href);
+   }catch(e){}
+  }else if(v&&typeof v==='object'){
+   for(const key of ['large','small','url','src','original','high','low','image','imageUrl','image_url','front','thumbnail'])if(v[key])collect(v[key]);
+  }
+ }
+ for(const value of imageValues)collect(value);
+ const unique=[...new Set(candidates)];
+ const img=document.createElement('img');img.className='card-image';img.alt=c.name||'カード';img.loading='lazy';img.referrerPolicy='no-referrer';
  let index=0;
- img.onerror=()=>{if(index<candidates.length){img.src=candidates[index++]}else{img.replaceWith(document.createTextNode('画像なし'))}};
- box.append(img);if(candidates.length)img.src=candidates[index++];else img.replaceWith(document.createTextNode('画像なし'));
+ const fallback=()=>{
+  const note=document.createElement('div');note.className='card-image-missing';
+  note.textContent='画像を取得できませんでした';img.replaceWith(note);
+ };
+ img.onerror=()=>{if(index<unique.length)img.src=unique[index++];else fallback()};
+ box.append(img);if(unique.length)img.src=unique[index++];else fallback();
  const title=document.createElement('h3');title.textContent=c.name||'カード名不明';box.append(title);
  for(const [key,value] of [['番号',c.number||c.id],['HP',c.hp],['レギュレーション',c.regulation||c.regulationMark]]){
   if(value!==undefined&&value!==null){const p=document.createElement('p');p.textContent=key+'：'+value;box.append(p)}
