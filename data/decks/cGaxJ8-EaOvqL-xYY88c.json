@@ -1,0 +1,197 @@
+{
+  "deckCode": "cGaxJ8-EaOvqL-xYY88c",
+  "source": "https://www.pokemon-card.com/deck/confirm.html/deckID/cGaxJ8-EaOvqL-xYY88c/",
+  "updatedAt": "2026-10-30T03:42:47.754940+00:00",
+  "total": 60,
+  "cards": [
+    {
+      "cardId": "47847",
+      "count": 4,
+      "category": "ポケモン",
+      "name": "メガガルーラex",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M1S/047847_P_MGARURAEX.jpg"
+    },
+    {
+      "cardId": "50400",
+      "count": 3,
+      "category": "ポケモン",
+      "name": "ファイアローex",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M6/050400_P_FUAIAROIEKKUSU.jpg"
+    },
+    {
+      "cardId": "48798",
+      "count": 3,
+      "category": "ポケモン",
+      "name": "オーガポン みどりのめんex",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/MC/048798_P_OGAPONMIDORINOMENEX.jpg"
+    },
+    {
+      "cardId": "48940",
+      "count": 1,
+      "category": "ポケモン",
+      "name": "オーガポン いどのめんex",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/MC/048940_P_OGAPONIDONOMENEX.jpg"
+    },
+    {
+      "cardId": "49028",
+      "count": 2,
+      "category": "ポケモン",
+      "name": "ラティアスex",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/MC/049028_P_RATEIASUEX.jpg"
+    },
+    {
+      "cardId": "47177",
+      "count": 1,
+      "category": "ポケモン",
+      "name": "キチキギスex",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/SVN/047177_P_KICHIKIGISUEX.jpg"
+    },
+    {
+      "cardId": "49003",
+      "count": 1,
+      "category": "ポケモン",
+      "name": "リーリエのピッピex",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/MC/049003_P_RIRIENOPIPPIEX.jpg"
+    },
+    {
+      "cardId": "45199",
+      "count": 1,
+      "category": "ポケモン",
+      "name": "タケルライコex",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/SV5K/045199_P_TAKERURAIKOEX.jpg"
+    },
+    {
+      "cardId": "49533",
+      "count": 1,
+      "category": "ポケモン",
+      "name": "コライドンex",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/MC/049533_P_KORAIDONEX.jpg"
+    },
+    {
+      "cardId": "48565",
+      "count": 1,
+      "category": "ポケモン",
+      "name": "パオジアン",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M2a/048565_P_PAOJIAN.jpg"
+    },
+    {
+      "cardId": "49694",
+      "count": 2,
+      "category": "ポケモン",
+      "name": "ニャースex",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M3/049694_P_NIXYASUEX.jpg"
+    },
+    {
+      "cardId": "47871",
+      "count": 4,
+      "category": "グッズ",
+      "name": "エネルギーつけかえ",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/MA/047871_T_ENERUGITSUKEKAE.jpg"
+    },
+    {
+      "cardId": "47885",
+      "count": 2,
+      "category": "グッズ",
+      "name": "夜のタンカ",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/MA/047885_T_YORUNOTANKA.jpg"
+    },
+    {
+      "cardId": "49349",
+      "count": 1,
+      "category": "グッズ",
+      "name": "アンフェアスタンプ",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/MC/049349_T_ANFUEASUTANPU.jpg"
+    },
+    {
+      "cardId": "49976",
+      "count": 4,
+      "category": "グッズ",
+      "name": "ハイパーボール",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M2a/049976_T_HAIPABORU.jpg"
+    },
+    {
+      "cardId": "46801",
+      "count": 1,
+      "category": "グッズ",
+      "name": "ガラスのラッパ",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/SV8a/046801_T_GARASUNORAPPA.jpg"
+    },
+    {
+      "cardId": "46442",
+      "count": 2,
+      "category": "サポート",
+      "name": "シアノ",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/SV8/046442_T_SHIANO.jpg"
+    },
+    {
+      "cardId": "46201",
+      "count": 4,
+      "category": "サポート",
+      "name": "アカマツ",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/SVLS/046201_T_AKAMATSU.jpg"
+    },
+    {
+      "cardId": "50429",
+      "count": 3,
+      "category": "サポート",
+      "name": "ボスの指令",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/MEE/050429_T_BOSUNOSHIREI.jpg"
+    },
+    {
+      "cardId": "47357",
+      "count": 1,
+      "category": "サポート",
+      "name": "ジャッジマン",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/SV9a/047357_T_JIXYAJJIMAN.jpg"
+    },
+    {
+      "cardId": "50450",
+      "count": 1,
+      "category": "サポート",
+      "name": "リーリエの決心",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/MEZ/050450_T_RIRIENOKESSHIN.jpg"
+    },
+    {
+      "cardId": "46843",
+      "count": 3,
+      "category": "スタジアム",
+      "name": "ゼロの大空洞",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/SV8a/046843_T_ZERONODAIKUUDOU.jpg"
+    },
+    {
+      "cardId": "50748",
+      "count": 2,
+      "category": "エネルギー",
+      "name": "基本雷エネルギー",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/M6a/050748_E_KIHONKAMINARIENERUGI.jpg"
+    },
+    {
+      "cardId": "50611",
+      "count": 2,
+      "category": "エネルギー",
+      "name": "基本超エネルギー",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/MF/050611_E_KIHONCHIXYOUENERUGI.jpg"
+    },
+    {
+      "cardId": "30040",
+      "count": 7,
+      "category": "エネルギー",
+      "name": "基本草エネルギー",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/HXY/030040_E_KIHONKUSAENERUGI.jpg"
+    },
+    {
+      "cardId": "45655",
+      "count": 2,
+      "category": "エネルギー",
+      "name": "基本闘エネルギー",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/XY-P/045655_E_KIHONTOUENERUGI.jpg"
+    },
+    {
+      "cardId": "47905",
+      "count": 1,
+      "category": "エネルギー",
+      "name": "基本水エネルギー",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/card_images/large/ENE/047905_E_KIHONMIZUENERUGI.jpg"
+    }
+  ]
+}
