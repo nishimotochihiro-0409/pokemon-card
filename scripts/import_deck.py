@@ -34,8 +34,8 @@ def parse_deck(html):
     return cards, diagnostics
 
 def extract_js_map(html, property_name):
-    """Read simple ID -> value maps from PCGDECK's inline JavaScript."""
-    anchor = re.search(r"\\b" + re.escape(property_name) + r"\\s*[:=]\\s*\\{", html)
+    """Read ID-to-string mappings in inline JavaScript."""
+    anchor = re.search(r"\b" + re.escape(property_name) + r"\s*[:=]\s*\{", html)
     if not anchor:
         return {}
     start = anchor.end()
@@ -49,7 +49,8 @@ def extract_js_map(html, property_name):
         end += 1
     body = html[start:end - 1]
     values = {}
-    for m in re.finditer(r"""['"]?(\\d{4,6})['"]?\\s*:\\s*(['"])((?:\\\\.|(?!\\2).)*?)\\2""", body):
+    pattern = r"""['"]?(\d{4,6})['"]?\s*:\s*(['"])(.*?)\2"""
+    for m in re.finditer(pattern, body, re.S):
         values[m.group(1)] = unescape(m.group(3).replace("\\/", "/"))
     return values
 
