@@ -58,7 +58,8 @@ def extract_js_map(html, property_name):
 def enrich_cards(html, cards):
     pictures = extract_js_map(html, "searchItemCardPict")
     names = extract_js_map(html, "searchItemCardName")
-    print("Card image mappings:", len(pictures), "name mappings:", len(names))\n    print("Deck page image references:", re.findall(r"""(?:src|data-src)=[\'"]([^\'"]+\\.(?:jpg|png|webp)[^\'"]*)""", html, re.I)[:8])
+    print("Card image mappings:", len(pictures), "name mappings:", len(names))
+    print("Deck page image references:", re.findall(r"""(?:src|data-src)=[\'"]([^\'"]+\.(?:jpg|png|webp)[^\'"]*)""", html, re.I)[:8])
     for card in cards:
         cid = card["cardId"]
         if cid in pictures:
