@@ -436,4 +436,64 @@ observer.observe(document.getElementById('hand'),{childList:true});
 document.querySelectorAll('#hand .card').forEach(c=>c.draggable=true);
 })();
 </script>
+
+<style id="compact-battle-v2">
+#battlePage .future-mat.touch-board{gap:5px;padding:8px}
+#battlePage .touch-board .zone{padding:7px 8px;min-height:0}
+#battlePage .touch-board .cards{min-height:0}
+#battlePage .touch-board .touch-middle{display:none}
+#battlePage .touch-board .touch-active{display:grid;grid-template-columns:minmax(135px,1fr) 125px minmax(135px,1fr);grid-template-rows:auto 1fr;gap:5px;align-items:center;min-height:155px;padding:8px}
+#battlePage .touch-board .touch-active>h3{grid-column:2;grid-row:1;margin:0;text-align:center;font-size:12px}
+#battlePage .touch-board .touch-active>.cards{grid-column:2;grid-row:2;justify-content:center}
+#battlePage .touch-board .touch-active .card{width:98px;min-height:125px}
+#battlePage .touch-board .touch-side-tools{grid-column:1;grid-row:1 / 3;display:flex;flex-direction:column;gap:5px;align-self:stretch;justify-content:center}
+#battlePage .touch-board .touch-side-tools.right-tools{grid-column:3}
+#battlePage .touch-board .touch-side-tools strong{font-size:12px;color:#54416c}
+#battlePage .touch-board .touch-side-tools button{font-size:12px;padding:7px 4px;min-height:32px;margin:0}
+#battlePage .touch-board .touch-side-tools select{font-size:12px;width:100%;padding:7px 3px;border:1px solid #ded3eb;border-radius:8px;background:white}
+#battlePage .touch-board .touch-side-tools .touch-tool-row{display:flex;gap:4px}
+#battlePage .touch-board .touch-side-tools .touch-tool-row button{flex:1}
+#battlePage .touch-board .touch-side-tools .touch-damage-readout{font-size:11px;color:#765b88}
+#battlePage .touch-board .touch-active #attackMenu{grid-column:1 / -1;grid-row:3;text-align:left;margin:4px 0}
+#battlePage .touch-board .touch-active .touch-side-tools .attack-menu{position:static}
+#battlePage .touch-board .touch-sides{font-size:10px}
+#battlePage .touch-board .touch-sides span{padding:3px 6px}
+#battlePage .touch-board .touch-tip{margin:2px;font-size:11px}
+#battlePage .shared-controls{margin-top:6px;padding:8px}
+#battlePage .shared-controls .battle-actions{display:none}
+#battlePage .shared-controls>h3{font-size:13px}
+#battlePage .shared-controls>.hint{display:none}
+@media(max-width:600px){
+#battlePage .touch-board .touch-active{grid-template-columns:minmax(80px,1fr) 88px minmax(80px,1fr);min-height:135px;padding:5px;gap:3px}
+#battlePage .touch-board .touch-active .card{width:75px;min-height:105px}
+#battlePage .touch-board .touch-side-tools button{font-size:10px;padding:5px 2px;min-height:29px}
+#battlePage .touch-board .touch-side-tools select{font-size:10px}
+#battlePage .touch-board .touch-side-tools strong{font-size:10px}
+}
+</style>
+<script id="compact-battle-v2-js">
+(function(){
+const mat=document.querySelector('#battlePage .future-mat.touch-board');if(!mat)return;
+const own=document.getElementById('myField').closest('.zone');
+const controls=document.querySelector('#battlePage .shared-controls');
+const menu=document.getElementById('attackMenu');
+const picker=document.getElementById('statusPicker');
+const actions=controls?.querySelector('.battle-actions');
+if(!own||!actions)return;
+const left=document.createElement('div');left.className='touch-side-tools left-tools';
+const right=document.createElement('div');right.className='touch-side-tools right-tools';
+const heading=(parent,text)=>{const h=document.createElement('strong');h.textContent=text;parent.append(h)};
+const move=(label,parent)=>{const b=[...actions.querySelectorAll('button')].find(x=>x.textContent.includes(label));if(b)parent.append(b)};
+heading(left,'ダメージ・状態');
+const damage=document.createElement('div');damage.className='touch-tool-row';left.append(damage);
+move('+10ダメージ',damage);move('-10ダメージ',damage);
+left.append(picker);
+const note=document.createElement('div');note.className='touch-damage-readout';note.textContent='自分のポケモンを選択して操作';left.append(note);
+heading(right,'ワザ・コイン');
+move('攻撃を選ぶ',right);move('コイン表裏',right);move('エネルギー +1',right);
+own.append(left,right,menu);
+const oldRender=window.render;
+if(typeof oldRender==='function'){window.render=function(){oldRender();try{const c=state?.field?.[0];note.textContent=c?'バトル場：'+(c.damage||0)+'ダメージ / エネ '+(c.energy||0):'バトル場は空です'}catch(e){}}}
+})();
+</script>
 </html>
