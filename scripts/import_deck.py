@@ -92,16 +92,14 @@ def fetch_card_detail(card_id):
     parsed.feed(html)
     title = parsed.title.split("|")[0].strip().split("｜")[0].strip()
     candidates = []
-    if parsed.meta_image:
-        candidates.append(parsed.meta_image)
     for img in parsed.images:
         src = img.get("data-src") or img.get("src") or ""
         alt = img.get("alt", "")
-        if src and (("card_images" in src) or ("card/" in src) or (title and alt == title)):
+        if src and (("card_images" in src) or ("card/" in src) or (title and alt.strip() == title)):
             candidates.append(src)
     for candidate in candidates:
         resolved = urljoin(BASE, unescape(candidate))
-        if resolved.startswith(BASE + "/") and re.search(r"\.(?:png|jpe?g|webp)(?:\?|$)", resolved, re.I):
+        if resolved.startswith(BASE + "/") and "/assets/images/og.png" not in resolved and re.search(r"\.(?:png|jpe?g|webp)(?:\?|$)", resolved, re.I):
             return title, resolved
     print("Card detail image not found:", card_id, "title:", title, "image candidates:", [x.get("src", "") for x in parsed.images[:5]])
     return title, None
