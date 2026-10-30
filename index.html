@@ -379,8 +379,17 @@ window.onlineSearch=async function(next=false){
  function renderChoices(){
   const root=document.getElementById('openingDeckChoices');root.replaceChildren();
   let decks=[];try{decks=JSON.parse(localStorage.getItem('pokemon-card-user-decks-v1')||'[]')}catch(e){}
-  if(!Array.isArray(decks)||!decks.length){root.append(node('p','保存済みデッキがありません。「デッキ管理」で登録してください。'));return}
-  for(const d of decks){const count=(d.cards||[]).reduce((n,c)=>n+Number(c.count||0),0);const b=node('button',d.name+'（'+count+'枚）で初手を引く');b.type='button';b.style.margin='4px';b.disabled=count!==60;b.onclick=()=>start(d.id);root.append(b)}
+  const toggle=node('button','デッキを選択 ▾');toggle.type='button';toggle.className='deck-picker-toggle';
+  const menu=node('div');menu.className='deck-picker-menu';menu.hidden=true;
+  toggle.onclick=()=>{menu.hidden=!menu.hidden;toggle.textContent=menu.hidden?'デッキを選択 ▾':'デッキ一覧を閉じる ▴'};
+  root.append(toggle,menu);
+  if(!Array.isArray(decks)||!decks.length){menu.append(node('p','保存済みデッキがありません。「デッキ管理」で登録してください。'));return}
+  for(const d of decks){
+   const count=(d.cards||[]).reduce((n,c)=>n+Number(c.count||0),0);
+   const b=node('button',d.name+'（'+count+'/60枚）');b.type='button';b.className='deck-picker-item';b.disabled=count!==60;
+   b.onclick=()=>{start(d.id);menu.hidden=true;toggle.textContent='デッキを変更 ▾'};
+   menu.append(b);
+  }
  }
  const originalSwitch=window.switchTab;
  window.switchTab=function(tab){originalSwitch(tab);if(tab==='battle')renderChoices()};
@@ -509,4 +518,14 @@ if(typeof oldRender==='function'){window.render=function(){oldRender();try{const
 #battlePage .opening-hand-card{width:clamp(62px,9vw,98px);flex:0 0 auto}
 #battlePage .opening-hand-card span{font-size:10px}
 #battlePage #openingHandPanel button{font-size:11px;padding:7px}
+</style><style id="deck-picker-and-hand-cleanup">
+#battlePage #openingDeckChoices{position:relative;max-width:320px;margin:8px auto 10px}
+#battlePage #openingDeckChoices .deck-picker-toggle{display:block;width:100%;margin:0;padding:9px 12px;font-size:12px;text-align:center}
+#battlePage #openingDeckChoices .deck-picker-menu{position:absolute;top:calc(100% + 4px);left:0;right:0;max-height:240px;overflow:auto;z-index:30;padding:7px;background:white;border:1px solid #dcd2eb;border-radius:12px;box-shadow:0 9px 25px #61537e33}
+#battlePage #openingDeckChoices .deck-picker-menu[hidden]{display:none!important}
+#battlePage #openingDeckChoices .deck-picker-item{display:block;width:100%;margin:3px 0;padding:9px 7px;text-align:left;font-size:12px}
+#battlePage .touch-hand>#hand{display:none!important}
+#battlePage .touch-hand>h3 #myStat{display:none!important}
+#battlePage .touch-hand .opening-hand-heading{justify-content:center}
+#battlePage .touch-hand .opening-hand-heading strong{font-size:12px}
 </style></html>
