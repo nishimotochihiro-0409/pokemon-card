@@ -386,4 +386,54 @@ window.onlineSearch=async function(next=false){
  renderChoices();
 })();
 </script>
+
+<style id="touch-battle-v1">
+#battlePage .future-mat.touch-board{display:grid;grid-template-columns:minmax(0,1fr);gap:9px;background:linear-gradient(180deg,#f0e9ff,#e8f8ff 48%,#fff0f8);padding:12px}
+#battlePage .touch-board .zone{margin:0;text-align:center}
+#battlePage .touch-board .cards{justify-content:center;min-height:100px}
+#battlePage .touch-board .touch-active{border:2px solid #bba0ee;background:#ffffffdf}
+#battlePage .touch-board .touch-hand{background:#ffffffeb}
+#battlePage .touch-board .touch-middle{text-align:center;color:#76649d;font-weight:800;letter-spacing:.18em;border-block:2px dashed #d4c5e9;padding:8px}
+#battlePage .touch-board .touch-drop{outline:3px dashed #9e73e8;outline-offset:-5px;background:#e9dcff!important}
+#battlePage .touch-board .touch-sides{display:flex;justify-content:space-around;gap:8px;color:#665780;font-size:12px}
+#battlePage .touch-board .touch-sides span{background:#fff9;border:1px solid #e3d8f2;border-radius:8px;padding:6px}
+#battlePage .touch-board .card{touch-action:pan-y}
+#battlePage .touch-board .touch-picked{outline:3px solid #9b75e4}
+#battlePage .touch-tip{text-align:center;font-size:12px;color:#68567d}
+</style>
+<script id="touch-battle-v1-js">
+(function(){
+const mat=document.querySelector('#battlePage .future-mat');
+if(!mat||mat.classList.contains('touch-board'))return;
+const cpu=document.getElementById('cpuField').closest('.zone');
+const bench=document.getElementById('cpuBench');
+const benchTitle=bench.previousElementSibling;
+const oppBench=document.createElement('div');oppBench.className='zone';oppBench.append(benchTitle,bench);
+const active=document.getElementById('myField').closest('.zone');
+const ownBench=document.getElementById('myBench').closest('.zone');
+const hand=document.getElementById('hand').closest('.zone');
+cpu.classList.add('touch-active');active.classList.add('touch-active');hand.classList.add('touch-hand');
+const middle=document.createElement('div');middle.className='touch-middle';middle.textContent='BATTLE FIELD';
+const topSides=document.createElement('div');topSides.className='touch-sides';topSides.innerHTML='<span>相手サイド・山札（準備中）</span><span>相手の手札（非公開）</span>';
+const bottomSides=document.createElement('div');bottomSides.className='touch-sides';bottomSides.innerHTML='<span>自分のサイド（準備中）</span><span>自分の山札（準備中）</span>';
+const tip=document.createElement('p');tip.className='touch-tip';tip.textContent='手札のポケモンを選んで配置先をタップ。PCではドラッグ＆ドロップにも対応。';
+mat.replaceChildren(topSides,oppBench,cpu,middle,active,ownBench,bottomSides,hand,tip);
+mat.classList.add('touch-board');
+let chosen=null;
+function choose(card){if(!card)return;card.click();chosen=card;document.querySelectorAll('#hand .card').forEach(x=>x.classList.toggle('touch-picked',x===card))}
+function drop(to){if(!chosen)return;choose(chosen);window.place(to);chosen=null;document.querySelectorAll('#hand .card').forEach(x=>x.classList.remove('touch-picked'))}
+const targets=[[active,'field'],[ownBench,'bench']];
+for(const [zone,to] of targets){
+ zone.addEventListener('click',e=>{if(chosen&&!e.target.closest('.card'))drop(to)});
+ zone.addEventListener('dragover',e=>{if(!chosen)return;e.preventDefault();zone.classList.add('touch-drop')});
+ zone.addEventListener('dragleave',()=>zone.classList.remove('touch-drop'));
+ zone.addEventListener('drop',e=>{e.preventDefault();zone.classList.remove('touch-drop');drop(to)});
+}
+hand.addEventListener('click',e=>{const card=e.target.closest('.card');if(card)choose(card)});
+hand.addEventListener('dragstart',e=>{const card=e.target.closest('.card');if(card){choose(card);e.dataTransfer.setData('text/plain','pokemon-card')}})
+const observer=new MutationObserver(()=>{document.querySelectorAll('#hand .card').forEach(c=>c.draggable=true)});
+observer.observe(document.getElementById('hand'),{childList:true});
+document.querySelectorAll('#hand .card').forEach(c=>c.draggable=true);
+})();
+</script>
 </html>
