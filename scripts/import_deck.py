@@ -10,6 +10,7 @@ from urllib.parse import urljoin
 from datetime import datetime, timezone
 from pathlib import Path
 from html import unescape
+from html.parser import HTMLParser
 
 BASE = "https://www.pokemon-card.com"
 CODE_RE = re.compile(r"^[A-Za-z0-9-]{10,60}$")
@@ -55,11 +56,62 @@ def extract_js_map(html, property_name):
     return values
 
 
+class CardPageParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.images = []
+        self.title = ""
+        self.in_title = False
+        self.meta_image = ""
+
+    def handle_starttag(self, tag, attrs):
+        a = dict(attrs)
+        if tag == "title":
+            self.in_title = True
+        if tag == "meta":
+            if a.get("property") in ("og:image", "twitter:image") or a.get("name") == "twitter:image":
+                self.meta_image = a.get("content", self.meta_image)
+        if tag == "img":
+            self.images.append(a)
+
+    def handle_endtag(self, tag):
+        if tag == "title":
+            self.in_title = False
+
+    def handle_data(self, data):
+        if self.in_title:
+            self.title += data
+
+
+def fetch_card_detail(card_id):
+    url = f"{BASE}/card-search/details.php/card/{card_id}/regu/all"
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    with urllib.request.urlopen(req, timeout=20) as response:
+        html = response.read().decode("utf-8", errors="replace")
+    parsed = CardPageParser()
+    parsed.feed(html)
+    title = parsed.title.split("|")[0].strip().split("｜")[0].strip()
+    candidates = []
+    if parsed.meta_image:
+        candidates.append(parsed.meta_image)
+    for img in parsed.images:
+        src = img.get("data-src") or img.get("src") or ""
+        alt = img.get("alt", "")
+        if src and (("card_images" in src) or ("card/" in src) or (title and alt == title)):
+            candidates.append(src)
+    for candidate in candidates:
+        resolved = urljoin(BASE, unescape(candidate))
+        if resolved.startswith(BASE + "/") and re.search(r"\.(?:png|jpe?g|webp)(?:\?|$)", resolved, re.I):
+            return title, resolved
+    print("Card detail image not found:", card_id, "title:", title, "image candidates:", [x.get("src", "") for x in parsed.images[:5]])
+    return title, None
+
+
 def enrich_cards(html, cards):
     pictures = extract_js_map(html, "searchItemCardPict")
     names = extract_js_map(html, "searchItemCardName")
     print("Card image mappings:", len(pictures), "name mappings:", len(names))
-    print("Deck page image references:", re.findall(r"""(?:src|data-src)=[\'"]([^\'"]+\.(?:jpg|png|webp)[^\'"]*)""", html, re.I)[:8])
+    print("Deck page image references:", re.findall(r"""(?:src|data-src)=['"]([^'"]+\.(?:jpg|png|webp)[^'"]*)""", html, re.I)[:8])
     for card in cards:
         cid = card["cardId"]
         if cid in pictures:
@@ -68,7 +120,17 @@ def enrich_cards(html, cards):
                 card["imageUrl"] = url
         if cid in names:
             card["name"] = names[cid]
-    print("Deck cards with images:", sum("imageUrl" in c for c in cards))
+        if "imageUrl" not in card or "name" not in card:
+            try:
+                title, image = fetch_card_detail(cid)
+                if title and "name" not in card:
+                    card["name"] = title
+                if image and "imageUrl" not in card:
+                    card["imageUrl"] = image
+            except Exception as exc:
+                print("Card detail fetch failed:", cid, str(exc))
+    print("Deck cards with images:", sum("imageUrl" in c for c in cards), "/", len(cards))
+    print("Deck cards with names:", sum("name" in c for c in cards), "/", len(cards))
     return cards
 
 
