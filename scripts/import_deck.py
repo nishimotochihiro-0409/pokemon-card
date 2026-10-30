@@ -15,14 +15,14 @@ CODE_RE = re.compile(r"^[A-Za-z0-9-]{10,60}$")
 FIELD_RE = re.compile(r'<input\b(?=[^>]*\b(?:id|name)=[\'"]?(deck_pok|deck_gds|deck_tool|deck_sup|deck_sta|deck_ene)[\'"]?)[^>]*>', re.I)
 ATTR_RE = re.compile(r'([\w-]+)\s*=\s*([\'"])(.*?)\2', re.S)
 ENTRY_RE = re.compile(r"(\d{4,6})_(\d{1,2})_(\d+)")
-CATEGORIES = {"deck_pok": "ポケモン", "deck_gds": "グッズ", "deck_tool": "ポケモンのどうぐ", "deck_sup": "サポート", "deck_sta": "スタジアム", "deck_ene": "エネルギー"}
+CATEGORIES = {"deck_pok": "ポケモン", "deck_pke": "ポケモン", "deck_tech": "その他", "deck_gds": "グッズ", "deck_tool": "ポケモンのどうぐ", "deck_sup": "サポート", "deck_sta": "スタジアム", "deck_ene": "エネルギー"}
 
 def parse_deck(html):
     cards = []
     diagnostics = []
     for match in re.finditer(r"<input\b[^>]*>", html, re.I | re.S):
         attrs = {k.lower(): unescape(v) for k, _, v in ATTR_RE.findall(match.group())}
-        field = attrs.get("id") or attrs.get("name")
+        field = attrs.get("id") if attrs.get("id") in CATEGORIES else attrs.get("name")
         if field not in CATEGORIES:
             continue
         raw = attrs.get("value", "")
