@@ -326,7 +326,10 @@ window.onlineSearch=async function(next=false){
  let currentDeck=null,remaining=[],hand=[];
  const panel=document.createElement('section');
  panel.id='openingHandPanel';panel.hidden=true;
- document.getElementById('savedDecks').after(panel);
+ const host=document.createElement('section');host.id='openingHandHost';host.style.cssText='margin:16px auto;max-width:1180px;padding:0 12px';
+ host.innerHTML='<h2>保存したデッキで初手練習</h2><p class="hint">デッキを選んで60枚をシャッフルし、初手7枚を確認できます。</p><div id="openingDeckChoices"></div>';
+ document.getElementById('battlePage').prepend(host);
+ host.append(panel);
  const node=(tag,text)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;return e};
  const secureRandom=(max)=>{
   if(!globalThis.crypto||!crypto.getRandomValues)return Math.floor(Math.random()*max);
@@ -372,18 +375,15 @@ window.onlineSearch=async function(next=false){
   panel.scrollIntoView({behavior:'smooth',block:'start'});
  }
  window.startOpeningHand=start;
- const original=window.renderDecks;
- window.renderDecks=function(){
-  original();
-  for(const d of JSON.parse(localStorage.getItem('pokemon-card-user-decks-v1')||'[]')){
-   const wraps=[...document.querySelectorAll('#savedDecks .deck-entry')];
-   const index=JSON.parse(localStorage.getItem('pokemon-card-user-decks-v1')||'[]').findIndex(x=>x.id===d.id);
-   const wrap=wraps[index];if(!wrap)continue;
-   const btn=node('button','初手7枚を引く');btn.type='button';btn.onclick=()=>start(d.id);
-   wrap.append(btn);
-  }
- };
- window.renderDecks();
+ function renderChoices(){
+  const root=document.getElementById('openingDeckChoices');root.replaceChildren();
+  let decks=[];try{decks=JSON.parse(localStorage.getItem('pokemon-card-user-decks-v1')||'[]')}catch(e){}
+  if(!Array.isArray(decks)||!decks.length){root.append(node('p','保存済みデッキがありません。「デッキ管理」で登録してください。'));return}
+  for(const d of decks){const count=(d.cards||[]).reduce((n,c)=>n+Number(c.count||0),0);const b=node('button',d.name+'（'+count+'枚）で初手を引く');b.type='button';b.style.margin='4px';b.disabled=count!==60;b.onclick=()=>start(d.id);root.append(b)}
+ }
+ const originalSwitch=window.switchTab;
+ window.switchTab=function(tab){originalSwitch(tab);if(tab==='battle')renderChoices()};
+ renderChoices();
 })();
 </script>
 </html>
