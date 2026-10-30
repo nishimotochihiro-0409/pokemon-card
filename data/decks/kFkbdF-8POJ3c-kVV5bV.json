@@ -1,138 +1,190 @@
 {
   "deckCode": "kFkbdF-8POJ3c-kVV5bV",
   "source": "https://www.pokemon-card.com/deck/confirm.html/deckID/kFkbdF-8POJ3c-kVV5bV/",
-  "updatedAt": "2026-10-30T02:47:39.175394+00:00",
+  "updatedAt": "2026-10-30T03:01:20.945643+00:00",
   "total": 60,
   "cards": [
     {
       "cardId": "49972",
       "count": 4,
-      "category": "ポケモン"
+      "category": "ポケモン",
+      "name": "ドロンチ",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/og.png?v=1998061658402"
     },
     {
       "cardId": "49956",
       "count": 1,
-      "category": "ポケモン"
+      "category": "ポケモン",
+      "name": "スボミー",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/og.png?v=1998061658402"
     },
     {
       "cardId": "49971",
       "count": 4,
-      "category": "ポケモン"
+      "category": "ポケモン",
+      "name": "ドラメシヤ",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/og.png?v=1998061658402"
     },
     {
       "cardId": "49694",
       "count": 1,
-      "category": "ポケモン"
+      "category": "ポケモン",
+      "name": "ニャースex",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/og.png?v=1998061658402"
     },
     {
       "cardId": "48603",
       "count": 2,
-      "category": "ポケモン"
+      "category": "ポケモン",
+      "name": "マシマシラ",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/og.png?v=1998061658402"
     },
     {
       "cardId": "48636",
       "count": 1,
-      "category": "ポケモン"
+      "category": "ポケモン",
+      "name": "キチキギスex",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/og.png?v=1998061658402"
     },
     {
       "cardId": "46781",
       "count": 3,
-      "category": "ポケモン"
+      "category": "ポケモン",
+      "name": "ドラパルトex",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/og.png?v=1998061658402"
     },
     {
       "cardId": "49290",
       "count": 2,
-      "category": "ポケモン"
+      "category": "ポケモン",
+      "name": "ノコッチ",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/og.png?v=1998061658402"
     },
     {
       "cardId": "49291",
       "count": 1,
-      "category": "ポケモン"
+      "category": "ポケモン",
+      "name": "ノココッチex",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/og.png?v=1998061658402"
     },
     {
       "cardId": "45203",
       "count": 2,
-      "category": "ポケモン"
+      "category": "ポケモン",
+      "name": "ノココッチ",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/og.png?v=1998061658402"
     },
     {
       "cardId": "49349",
       "count": 1,
-      "category": "グッズ"
+      "category": "グッズ",
+      "name": "アンフェアスタンプ",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/og.png?v=1998061658402"
     },
     {
       "cardId": "49364",
       "count": 4,
-      "category": "グッズ"
+      "category": "グッズ",
+      "name": "なかよしポフィン",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/og.png?v=1998061658402"
     },
     {
       "cardId": "49367",
       "count": 3,
-      "category": "グッズ"
+      "category": "グッズ",
+      "name": "ハイパーボール",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/og.png?v=1998061658402"
     },
     {
       "cardId": "49386",
       "count": 3,
-      "category": "グッズ"
+      "category": "グッズ",
+      "name": "夜のタンカ",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/og.png?v=1998061658402"
     },
     {
       "cardId": "49703",
       "count": 4,
-      "category": "グッズ"
+      "category": "グッズ",
+      "name": "ポケパッド",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/og.png?v=1998061658402"
     },
     {
       "cardId": "49976",
       "count": 1,
-      "category": "グッズ"
+      "category": "グッズ",
+      "name": "ハイパーボール",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/og.png?v=1998061658402"
     },
     {
       "cardId": "46824",
       "count": 2,
-      "category": "サポート"
+      "category": "サポート",
+      "name": "アカマツ",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/og.png?v=1998061658402"
     },
     {
       "cardId": "48697",
       "count": 4,
-      "category": "サポート"
+      "category": "サポート",
+      "name": "リーリエの決心",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/og.png?v=1998061658402"
     },
     {
       "cardId": "49440",
       "count": 3,
-      "category": "サポート"
+      "category": "サポート",
+      "name": "ボスの指令",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/og.png?v=1998061658402"
     },
     {
       "cardId": "49708",
       "count": 1,
-      "category": "サポート"
+      "category": "サポート",
+      "name": "メイのはげまし",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/og.png?v=1998061658402"
     },
     {
       "cardId": "50448",
       "count": 1,
-      "category": "サポート"
+      "category": "サポート",
+      "name": "ジャッジマン",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/og.png?v=1998061658402"
     },
     {
       "cardId": "47796",
       "count": 2,
-      "category": "スタジアム"
+      "category": "スタジアム",
+      "name": "危ない廃墟",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/og.png?v=1998061658402"
     },
     {
       "cardId": "48711",
       "count": 1,
-      "category": "スタジアム"
+      "category": "スタジアム",
+      "name": "ロケット団の監視塔",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/og.png?v=1998061658402"
     },
     {
       "cardId": "33196",
       "count": 3,
-      "category": "エネルギー"
+      "category": "エネルギー",
+      "name": "基本悪エネルギー",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/og.png?v=1998061658402"
     },
     {
       "cardId": "31729",
       "count": 3,
-      "category": "エネルギー"
+      "category": "エネルギー",
+      "name": "基本炎エネルギー",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/og.png?v=1998061658402"
     },
     {
       "cardId": "31732",
       "count": 3,
-      "category": "エネルギー"
+      "category": "エネルギー",
+      "name": "基本超エネルギー",
+      "imageUrl": "https://www.pokemon-card.com/assets/images/og.png?v=1998061658402"
     }
   ]
 }
