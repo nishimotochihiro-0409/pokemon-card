@@ -6,6 +6,7 @@ import argparse
 import json
 import re
 import urllib.request
+from urllib.parse import urljoin
 from datetime import datetime, timezone
 from pathlib import Path
 from html import unescape
@@ -32,6 +33,43 @@ def parse_deck(html):
             cards.append({"cardId": card_id, "count": int(count), "category": CATEGORIES[field]})
     return cards, diagnostics
 
+def extract_js_map(html, property_name):
+    """Read simple ID -> value maps from PCGDECK's inline JavaScript."""
+    anchor = re.search(r"\\b" + re.escape(property_name) + r"\\s*[:=]\\s*\\{", html)
+    if not anchor:
+        return {}
+    start = anchor.end()
+    depth = 1
+    end = start
+    while end < len(html) and depth:
+        if html[end] == "{":
+            depth += 1
+        elif html[end] == "}":
+            depth -= 1
+        end += 1
+    body = html[start:end - 1]
+    values = {}
+    for m in re.finditer(r"""['"]?(\\d{4,6})['"]?\\s*:\\s*(['"])((?:\\\\.|(?!\\2).)*?)\\2""", body):
+        values[m.group(1)] = unescape(m.group(3).replace("\\/", "/"))
+    return values
+
+
+def enrich_cards(html, cards):
+    pictures = extract_js_map(html, "searchItemCardPict")
+    names = extract_js_map(html, "searchItemCardName")
+    print("Card image mappings:", len(pictures), "name mappings:", len(names))
+    for card in cards:
+        cid = card["cardId"]
+        if cid in pictures:
+            url = urljoin(BASE, pictures[cid])
+            if url.startswith(BASE + "/"):
+                card["imageUrl"] = url
+        if cid in names:
+            card["name"] = names[cid]
+    print("Deck cards with images:", sum("imageUrl" in c for c in cards))
+    return cards
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("code")
@@ -47,6 +85,7 @@ def main():
     print("Page bytes:", len(html))
     print("Parsed fields:", json.dumps(diagnostics, ensure_ascii=False))
     print("Other deck-related input names:", sorted(set(re.findall(r'<input[^>]+(?:id|name)=[\\\'"]([^\\\'"]*deck[^\\\'"]*)', html, re.I)))[:30])
+    cards = enrich_cards(html, cards)
     total = sum(c["count"] for c in cards)
     if total != 60:
         raise RuntimeError(f"Deck validation failed: parsed {len(cards)} entries / {total} cards, expected 60. Not saving incomplete data.")
