@@ -171,10 +171,22 @@ window.readDeckCode=async function(){
   if(deck.deckCode!==code||!Array.isArray(deck.cards)||deck.cards.reduce((n,c)=>n+Number(c.count||0),0)!==60)throw new Error('invalid-data');
   out.textContent='60枚のデッキデータを読み込みました（カードID表示）。';
   const h=document.createElement('h3');h.textContent='取り込み結果：60枚 / '+deck.cards.length+'種類';target.append(h);
-  const list=document.createElement('div');list.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px';
+  const list=document.createElement('div');
+  list.style.cssText='display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:7px;margin-top:10px';
   for(const c of deck.cards){
-   const item=document.createElement('div');item.style.cssText='background:white;border:1px solid #ddd3ed;border-radius:9px;padding:10px';
-   item.textContent=(c.category||'カード')+' / ID '+c.cardId+' / '+c.count+'枚';
+   const item=document.createElement('div');
+   item.style.cssText='position:relative;min-width:0;border:1px solid #ddd3ed;border-radius:8px;overflow:hidden;background:white';
+   if(c.imageUrl){
+    const img=document.createElement('img');img.src=c.imageUrl;img.alt=c.name||'カード '+c.cardId;
+    img.loading='lazy';img.referrerPolicy='no-referrer';
+    img.style.cssText='display:block;width:100%;aspect-ratio:0.72;object-fit:contain;background:#f5f3fa';
+    img.onerror=()=>{img.replaceWith(document.createTextNode('画像を表示できません'))};
+    item.append(img);
+   }else{
+    const missing=document.createElement('div');missing.textContent='画像準備中';missing.style.cssText='aspect-ratio:0.72;display:grid;place-items:center;font-size:12px;color:#777;background:#f5f3fa';item.append(missing);
+   }
+   const count=document.createElement('span');count.textContent='×'+c.count;count.style.cssText='position:absolute;right:3px;bottom:30px;background:#161325;color:white;border-radius:5px;padding:2px 5px;font-weight:700;font-size:13px';item.append(count);
+   const name=document.createElement('div');name.textContent=c.name||'カードID '+c.cardId;name.style.cssText='font-size:11px;line-height:1.3;padding:5px;min-height:30px;overflow-wrap:anywhere';item.append(name);
    list.append(item);
   }
   target.append(list);
