@@ -311,4 +311,79 @@ window.onlineSearch=async function(next=false){
  }catch(e){if(token===searchToken)$('onlineStatus').textContent='検索エラー：'+e.message}
 };
 })();
-</script></html>
+</script>
+<style id="opening-hand-style">
+#openingHandPanel{margin:16px 0;padding:16px;border:1px solid #ddd3ed;border-radius:12px;background:#faf8ff}
+#openingHandPanel[hidden]{display:none}
+.opening-hand-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(105px,1fr));gap:10px;margin:12px 0}
+.opening-hand-card{min-width:0;border:1px solid #ddd3ed;border-radius:9px;background:white;overflow:hidden}
+.opening-hand-card img{display:block;width:100%;aspect-ratio:.72;object-fit:contain;background:#f2f0f8}
+.opening-hand-card span{display:block;font-size:12px;padding:5px;overflow-wrap:anywhere}
+.opening-hand-actions{display:flex;gap:8px;flex-wrap:wrap}
+</style>
+<script id="opening-hand-script">
+(function(){
+ let currentDeck=null,remaining=[],hand=[];
+ const panel=document.createElement('section');
+ panel.id='openingHandPanel';panel.hidden=true;
+ document.getElementById('savedDecks').after(panel);
+ const node=(tag,text)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;return e};
+ const secureRandom=(max)=>{
+  if(!globalThis.crypto||!crypto.getRandomValues)return Math.floor(Math.random()*max);
+  const a=new Uint32Array(1),limit=Math.floor(4294967296/max)*max;
+  do{crypto.getRandomValues(a)}while(a[0]>=limit);
+  return a[0]%max;
+ };
+ function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=secureRandom(i+1);[arr[i],arr[j]]=[arr[j],arr[i]]}return arr}
+ function render(){
+  panel.replaceChildren();
+  if(!currentDeck){panel.hidden=true;return}
+  panel.hidden=false;
+  panel.append(node('h3',currentDeck.name+'｜初手7枚の練習'));
+  panel.append(node('p','手札 '+hand.length+'枚 ／ 山札 '+remaining.length+'枚'));
+  const actions=node('div');actions.className='opening-hand-actions';
+  const reset=node('button','シャッフルして7枚引く');reset.type='button';reset.onclick=()=>start(currentDeck.id);
+  const draw=node('button','山札から1枚引く');draw.type='button';draw.disabled=!remaining.length;draw.onclick=()=>{hand.push(remaining.pop());render()};
+  const close=node('button','閉じる');close.type='button';close.onclick=()=>{currentDeck=null;render()};
+  actions.append(reset,draw,close);panel.append(actions);
+  const grid=node('div');grid.className='opening-hand-grid';
+  for(const c of hand){
+   const card=node('div');card.className='opening-hand-card';
+   if(c.imageUrl){const img=node('img');img.src=c.imageUrl;img.alt=c.name||'カード';img.loading='lazy';img.referrerPolicy='no-referrer';img.onerror=()=>{img.replaceWith(node('span','画像を表示できません'))};card.append(img)}
+   else card.append(node('div','画像なし'));
+   card.append(node('span',c.name||'カードID '+(c.cardId||'不明')));grid.append(card);
+  }
+  panel.append(grid);
+  panel.append(node('p','※ 現段階では初手確認用です。たねポケモンの判定・マリガン・サイド・対戦処理はまだありません。'));
+ }
+ function start(id){
+  let decks;
+  try{decks=JSON.parse(localStorage.getItem('pokemon-card-user-decks-v1')||'[]')}catch(e){decks=[]}
+  const d=Array.isArray(decks)?decks.find(x=>x.id===id):null;
+  if(!d)return;
+  const cards=[];
+  for(const c of d.cards||[]){
+   const count=Number(c.count);
+   if(!Number.isInteger(count)||count<1||count>60)continue;
+   for(let i=0;i<count;i++)cards.push({...c,count:1});
+  }
+  if(cards.length!==60){alert('60枚のデッキのみ初手練習できます。');return}
+  currentDeck=d;remaining=shuffle(cards);hand=remaining.splice(-7);render();
+  panel.scrollIntoView({behavior:'smooth',block:'start'});
+ }
+ window.startOpeningHand=start;
+ const original=window.renderDecks;
+ window.renderDecks=function(){
+  original();
+  for(const d of JSON.parse(localStorage.getItem('pokemon-card-user-decks-v1')||'[]')){
+   const wraps=[...document.querySelectorAll('#savedDecks .deck-entry')];
+   const index=JSON.parse(localStorage.getItem('pokemon-card-user-decks-v1')||'[]').findIndex(x=>x.id===d.id);
+   const wrap=wraps[index];if(!wrap)continue;
+   const btn=node('button','初手7枚を引く');btn.type='button';btn.onclick=()=>start(d.id);
+   wrap.append(btn);
+  }
+ };
+ window.renderDecks();
+})();
+</script>
+</html>
