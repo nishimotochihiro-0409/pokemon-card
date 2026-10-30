@@ -326,9 +326,10 @@ window.onlineSearch=async function(next=false){
  let currentDeck=null,remaining=[],hand=[];
  const panel=document.createElement('section');
  panel.id='openingHandPanel';panel.hidden=true;
- const host=document.createElement('section');host.id='openingHandHost';host.style.cssText='margin:16px auto;max-width:1180px;padding:0 12px';
- host.innerHTML='<h2>保存したデッキで初手練習</h2><p class="hint">デッキを選んで60枚をシャッフルし、初手7枚を確認できます。</p><div id="openingDeckChoices"></div>';
- document.getElementById('battlePage').prepend(host);
+ const host=document.createElement('div');host.id='openingHandHost';host.className='opening-hand-inline';
+ host.innerHTML='<div class="opening-hand-heading"><strong>保存デッキの手札練習</strong><span class="hint">保存した60枚から7枚引く</span></div><div id="openingDeckChoices"></div>';
+ const handZone=document.getElementById('hand').closest('.zone');
+ handZone.append(host);
  host.append(panel);
  const node=(tag,text)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;return e};
  const secureRandom=(max)=>{
@@ -342,7 +343,7 @@ window.onlineSearch=async function(next=false){
   panel.replaceChildren();
   if(!currentDeck){panel.hidden=true;return}
   panel.hidden=false;
-  panel.append(node('h3',currentDeck.name+'｜初手7枚の練習'));
+  panel.append(node('h3',currentDeck.name+'｜手札'));
   panel.append(node('p','手札 '+hand.length+'枚 ／ 山札 '+remaining.length+'枚'));
   const actions=node('div');actions.className='opening-hand-actions';
   const reset=node('button','シャッフルして7枚引く');reset.type='button';reset.onclick=()=>start(currentDeck.id);
@@ -496,4 +497,16 @@ const oldRender=window.render;
 if(typeof oldRender==='function'){window.render=function(){oldRender();try{const c=state?.field?.[0];note.textContent=c?'バトル場：'+(c.damage||0)+'ダメージ / エネ '+(c.energy||0):'バトル場は空です'}catch(e){}}}
 })();
 </script>
-</html>
+<style id="opening-hand-inline-fix">
+#battlePage .opening-hand-inline{margin:8px 0 0;padding:9px;border-top:1px solid #e5dcef;text-align:left}
+#battlePage .opening-hand-heading{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;font-size:12px}
+#battlePage .opening-hand-heading .hint{font-size:11px}
+#battlePage #openingDeckChoices{text-align:center;margin:5px 0}
+#battlePage #openingDeckChoices button{font-size:11px;padding:7px;margin:3px}
+#battlePage #openingHandPanel{margin:8px 0;padding:8px;border-radius:10px}
+#battlePage #openingHandPanel h3{font-size:13px}
+#battlePage .opening-hand-grid{display:flex;justify-content:center;gap:5px;flex-wrap:wrap}
+#battlePage .opening-hand-card{width:clamp(62px,9vw,98px);flex:0 0 auto}
+#battlePage .opening-hand-card span{font-size:10px}
+#battlePage #openingHandPanel button{font-size:11px;padding:7px}
+</style></html>
