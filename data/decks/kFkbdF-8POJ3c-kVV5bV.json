@@ -1,0 +1,138 @@
+{
+  "deckCode": "kFkbdF-8POJ3c-kVV5bV",
+  "source": "https://www.pokemon-card.com/deck/confirm.html/deckID/kFkbdF-8POJ3c-kVV5bV/",
+  "updatedAt": "2026-10-30T01:44:46.488491+00:00",
+  "total": 60,
+  "cards": [
+    {
+      "cardId": "49972",
+      "count": 4,
+      "category": "ポケモン"
+    },
+    {
+      "cardId": "49956",
+      "count": 1,
+      "category": "ポケモン"
+    },
+    {
+      "cardId": "49971",
+      "count": 4,
+      "category": "ポケモン"
+    },
+    {
+      "cardId": "49694",
+      "count": 1,
+      "category": "ポケモン"
+    },
+    {
+      "cardId": "48603",
+      "count": 2,
+      "category": "ポケモン"
+    },
+    {
+      "cardId": "48636",
+      "count": 1,
+      "category": "ポケモン"
+    },
+    {
+      "cardId": "46781",
+      "count": 3,
+      "category": "ポケモン"
+    },
+    {
+      "cardId": "49290",
+      "count": 2,
+      "category": "ポケモン"
+    },
+    {
+      "cardId": "49291",
+      "count": 1,
+      "category": "ポケモン"
+    },
+    {
+      "cardId": "45203",
+      "count": 2,
+      "category": "ポケモン"
+    },
+    {
+      "cardId": "49349",
+      "count": 1,
+      "category": "グッズ"
+    },
+    {
+      "cardId": "49364",
+      "count": 4,
+      "category": "グッズ"
+    },
+    {
+      "cardId": "49367",
+      "count": 3,
+      "category": "グッズ"
+    },
+    {
+      "cardId": "49386",
+      "count": 3,
+      "category": "グッズ"
+    },
+    {
+      "cardId": "49703",
+      "count": 4,
+      "category": "グッズ"
+    },
+    {
+      "cardId": "49976",
+      "count": 1,
+      "category": "グッズ"
+    },
+    {
+      "cardId": "46824",
+      "count": 2,
+      "category": "サポート"
+    },
+    {
+      "cardId": "48697",
+      "count": 4,
+      "category": "サポート"
+    },
+    {
+      "cardId": "49440",
+      "count": 3,
+      "category": "サポート"
+    },
+    {
+      "cardId": "49708",
+      "count": 1,
+      "category": "サポート"
+    },
+    {
+      "cardId": "50448",
+      "count": 1,
+      "category": "サポート"
+    },
+    {
+      "cardId": "47796",
+      "count": 2,
+      "category": "スタジアム"
+    },
+    {
+      "cardId": "48711",
+      "count": 1,
+      "category": "スタジアム"
+    },
+    {
+      "cardId": "33196",
+      "count": 3,
+      "category": "エネルギー"
+    },
+    {
+      "cardId": "31729",
+      "count": 3,
+      "category": "エネルギー"
+    },
+    {
+      "cardId": "31732",
+      "count": 3,
+      "category": "エネルギー"
+    }
+  ]
+}
