@@ -332,17 +332,27 @@ window.onlineSearch=async function(next=false){
  handZone.append(host);
  host.append(panel);
  const node=(tag,text)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;return e};
- function isBasicPokemon(card){
+ const stageOverridesKey='pokemon-card-stage-overrides-v1';
+ let stageOverrides={};
+ try{stageOverrides=JSON.parse(localStorage.getItem(stageOverridesKey)||'{}')||{}}catch(e){}
+ function cardIdentity(card){return String(card.cardId||card.id||card.name||'').trim()}
+ function pokemonStage(card){
   const category=String(card.category||card.supertype||card.cardType||'').trim();
-  const stage=String(card.stage||card.evolutionStage||card.evolution||card.subtype||card.subType||'').trim();
+  if(!/^(ポケモン|pokemon|pokémon)$/i.test(category))return 'not-pokemon';
+  const raw=String(card.stage||card.evolutionStage||card.evolution||card.subtype||card.subType||'').trim();
+  if(/^(たね|basic|basic pokemon)$/i.test(raw))return 'basic';
+  if(/(1進化|2進化|stage\\s*[12]|進化|vmax|vstar|mega)/i.test(raw))return 'evolved';
   const name=String(card.name||'');
-  if(!/^(ポケモン|pokemon|pokémon)$/i.test(category))return false;
-  if(/^(1進化|2進化|stage ?1|stage ?2|進化|vmax|vstar|mega)$/i.test(stage))return false;
-  if(/^(たね|basic)$/i.test(stage))return true;
-  if(/^(M|メガ)[・\s]?|VMAX|VSTAR|exの進化/i.test(name))return false;
-  // The official-deck importer often supplies category but no evolution stage.
-  // Permit Pokemon with missing stage for placement practice; reject known evolutions above.
-  return !stage;
+  if(/(VMAX|VSTAR)$/i.test(name))return 'evolved';
+  return stageOverrides[cardIdentity(card)]||'unknown';
+ }
+ function isBasicPokemon(card){return pokemonStage(card)==='basic'||pokemonStage(card)==='unknown'}
+ function confirmBasicBeforePlacement(card){
+  if(pokemonStage(card)!=='unknown')return pokemonStage(card)==='basic';
+  const yes=confirm('このポケモンはカード情報に進化段階がありません。\\nカード左上に「たね」と書かれていますか？\\n\\nOK：たねポケモン ／ キャンセル：進化ポケモン');
+  const id=cardIdentity(card);
+  if(id){stageOverrides[id]=yes?'basic':'evolved';try{localStorage.setItem(stageOverridesKey,JSON.stringify(stageOverrides))}catch(e){}}
+  return yes;
  }
  const secureRandom=(max)=>{
   if(!globalThis.crypto||!crypto.getRandomValues)return Math.floor(Math.random()*max);
@@ -475,7 +485,8 @@ window.onlineSearch=async function(next=false){
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enableDrops);else setTimeout(enableDrops,0);
  function placeReal(index,where){
   const card=hand[index];if(!card)return;
-  if(!isBasicPokemon(card)){alert('バトル場・ベンチに置けるのは「たねポケモン」だけです。サポート・グッズ・エネルギー・進化ポケモンは置けません。');return}
+  if(!isBasicPokemon(card)){alert('バトル場・ベンチには「たねポケモン」だけを出せます。');return}
+  if(!confirmBasicBeforePlacement(card))return;
   if(where==='active'&&activeCard)return;
   if(where==='bench'&&benchCards.length>=5)return;
   hand.splice(index,1);selectedIndex=null;
