@@ -323,7 +323,7 @@ window.onlineSearch=async function(next=false){
 </style>
 <script id="opening-hand-script">
 (function(){
- let currentDeck=null,remaining=[],hand=[];
+ let currentDeck=null,remaining=[],hand=[],activeCard=null,benchCards=[];
  const panel=document.createElement('section');
  panel.id='openingHandPanel';panel.hidden=true;
  const host=document.createElement('div');host.id='openingHandHost';host.className='opening-hand-inline';
@@ -343,7 +343,9 @@ window.onlineSearch=async function(next=false){
   panel.replaceChildren();
   if(!currentDeck){panel.hidden=true;return}
   panel.hidden=false;
+  renderPlaced();
   panel.append(node('h3',currentDeck.name+'｜手札'));
+  panel.append(node('p','バトル場 '+(activeCard?.name||'なし')+' ／ ベンチ '+benchCards.length+'/5'));
   panel.append(node('p','手札 '+hand.length+'枚 ／ 山札 '+remaining.length+'枚'));
   const actions=node('div');actions.className='opening-hand-actions';
   const reset=node('button','シャッフルして7枚引く');reset.type='button';reset.onclick=()=>start(currentDeck.id);
@@ -351,14 +353,40 @@ window.onlineSearch=async function(next=false){
   const close=node('button','閉じる');close.type='button';close.onclick=()=>{currentDeck=null;render()};
   actions.append(reset,draw,close);panel.append(actions);
   const grid=node('div');grid.className='opening-hand-grid';
-  for(const c of hand){
+  for(const [index,c] of hand.entries()){
    const card=node('div');card.className='opening-hand-card';
    if(c.imageUrl){const img=node('img');img.src=c.imageUrl;img.alt=c.name||'カード';img.loading='lazy';img.referrerPolicy='no-referrer';img.onerror=()=>{img.replaceWith(node('span','画像を表示できません'))};card.append(img)}
    else card.append(node('div','画像なし'));
-   card.append(node('span',c.name||'カードID '+(c.cardId||'不明')));grid.append(card);
+   card.append(node('span',c.name||'カードID '+(c.cardId||'不明')));
+   const controls=node('div');controls.className='real-card-actions';
+   const activeButton=node('button','バトル場へ');activeButton.type='button';activeButton.disabled=!!activeCard;activeButton.onclick=()=>placeReal(index,'active');
+   const benchButton=node('button','ベンチへ');benchButton.type='button';benchButton.disabled=benchCards.length>=5;benchButton.onclick=()=>placeReal(index,'bench');
+   controls.append(activeButton,benchButton);card.append(controls);grid.append(card);
   }
   panel.append(grid);
-  panel.append(node('p','※ 現段階では初手確認用です。たねポケモンの判定・マリガン・サイド・対戦処理はまだありません。'));
+  panel.append(node('p','※ 配置練習の試験版です。たねポケモンの判定・進化・マリガンなどは未実装です。ポケモン以外は配置しないでください。'));
+ }
+ function renderPlaced(){
+  const page=document.getElementById('battlePage');if(!page)return;
+  for(const [zoneClass,id,cards] of [['ref-own-active','realActiveCards',activeCard?[activeCard]:[]],['ref-own-bench','realBenchCards',benchCards]]){
+   const zone=page.querySelector('.'+zoneClass);if(!zone)continue;
+   let area=zone.querySelector('#'+id);
+   if(!area){area=node('div');area.id=id;area.className='real-play-area';zone.append(area)}
+   area.replaceChildren();
+   for(const card of cards){
+    const el=node('div');el.className='real-play-card';
+    if(card.imageUrl){const img=node('img');img.src=card.imageUrl;img.alt=card.name||'カード';img.loading='lazy';img.referrerPolicy='no-referrer';el.append(img)}
+    el.append(node('span',card.name||'カード'));area.append(el);
+   }
+  }
+ }
+ function placeReal(index,where){
+  const card=hand[index];if(!card)return;
+  if(where==='active'&&activeCard)return;
+  if(where==='bench'&&benchCards.length>=5)return;
+  hand.splice(index,1);
+  if(where==='active')activeCard=card;else benchCards.push(card);
+  render();
  }
  function start(id){
   let decks;
@@ -372,7 +400,7 @@ window.onlineSearch=async function(next=false){
    for(let i=0;i<count;i++)cards.push({...c,count:1});
   }
   if(cards.length!==60){alert('60枚のデッキのみ初手練習できます。');return}
-  currentDeck=d;remaining=shuffle(cards);hand=remaining.splice(-7);render();
+  currentDeck=d;remaining=shuffle(cards);hand=remaining.splice(-7);activeCard=null;benchCards=[];render();
   panel.scrollIntoView({behavior:'smooth',block:'start'});
  }
  window.startOpeningHand=start;
@@ -811,4 +839,11 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 else fixDeckPicker();
 window.addEventListener('load',fixDeckPicker);
 })();
-</script></html>
+</script><style id="real-deck-placement-v1">
+#battlePage .real-card-actions{display:flex;gap:4px;padding:4px;flex-wrap:wrap}
+#battlePage .real-card-actions button{flex:1 1 75px;font-size:11px;padding:5px 3px;min-height:30px}
+#battlePage .real-card-actions button:disabled{opacity:.35}
+#battlePage .real-play-area{display:flex;justify-content:center;gap:7px;flex-wrap:wrap;width:100%;margin:5px auto}
+#battlePage .real-play-card{width:clamp(55px,7vw,92px);min-width:0;display:flex;flex-direction:column;align-items:center;font-size:10px;background:#fff9;border:1px solid #bba5d9;border-radius:7px;padding:3px}
+#battlePage .real-play-card img{width:100%;aspect-ratio:.72;object-fit:contain}
+</style></html>
