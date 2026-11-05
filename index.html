@@ -656,4 +656,52 @@ const oldHandButtons=[...document.querySelectorAll('#battlePage button')].filter
 for(const b of oldHandButtons){const row=b.closest('.row');if(row)row.classList.add('ref-legacy-hidden')}
 })();
 </script>
+
+<style id="animated-coin-v1">
+#battlePage #coinResult{display:none!important}
+#battlePage .battle-coin-wrap{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;margin:3px auto}
+#battlePage .battle-coin{width:62px;height:62px;position:relative;transform-style:preserve-3d;perspective:500px;filter:drop-shadow(0 3px 4px #55436b55)}
+#battlePage .battle-coin-face{position:absolute;inset:0;display:grid;place-items:center;backface-visibility:hidden;border:4px solid #d6a83c;border-radius:50%;background:radial-gradient(circle at 30% 25%,#fff9d7,#ffdf75 55%,#d8a534);font-weight:900;color:#704b19;font-size:19px}
+#battlePage .battle-coin-back{transform:rotateY(180deg);background:radial-gradient(circle at 30% 25%,#e4faff,#87c7fa 55%,#4a87c7);border-color:#6b9bd0;color:#19446f}
+#battlePage .battle-coin.is-spinning{animation:battle-coin-spin .18s linear infinite}
+#battlePage .battle-coin.is-heads{transform:rotateY(0deg)}
+#battlePage .battle-coin.is-tails{transform:rotateY(180deg)}
+#battlePage .battle-coin-result{font-size:12px;font-weight:800;color:#634b87;min-height:18px}
+@keyframes battle-coin-spin{from{transform:rotateY(0deg)}to{transform:rotateY(360deg)}}
+@media(prefers-reduced-motion:reduce){#battlePage .battle-coin.is-spinning{animation-duration:.45s}}
+</style>
+<script id="animated-coin-v1-script">
+(function(){
+const right=document.querySelector('#battlePage .ref-own-active .right-tools')||document.querySelector('#battlePage .right-tools');
+if(!right)return;
+const wrap=document.createElement('div');wrap.className='battle-coin-wrap';
+const coin=document.createElement('div');coin.className='battle-coin is-heads';coin.setAttribute('role','img');coin.setAttribute('aria-label','コイン');
+const front=document.createElement('div');front.className='battle-coin-face';front.textContent='表';
+const back=document.createElement('div');back.className='battle-coin-face battle-coin-back';back.textContent='裏';
+coin.append(front,back);
+const label=document.createElement('div');label.className='battle-coin-result';label.setAttribute('aria-live','polite');label.textContent='コインを投げよう';
+wrap.append(coin,label);
+const trigger=[...right.querySelectorAll('button')].find(b=>b.textContent.includes('コイン表裏'));
+if(trigger)trigger.before(wrap);else right.append(wrap);
+let spinning=false;
+window.flipCoin=function(){
+ if(spinning)return;
+ spinning=true;
+ if(trigger)trigger.disabled=true;
+ label.textContent='回転中…';
+ coin.classList.remove('is-heads','is-tails');coin.classList.add('is-spinning');
+ const bits=new Uint32Array(1);
+ if(globalThis.crypto&&crypto.getRandomValues)crypto.getRandomValues(bits);else bits[0]=Math.floor(Math.random()*4294967296);
+ const result=bits[0]%2===0?'表':'裏';
+ window.setTimeout(()=>{
+  coin.classList.remove('is-spinning');
+  coin.classList.add(result==='表'?'is-heads':'is-tails');
+  label.textContent='結果：'+result;
+  spinning=false;if(trigger)trigger.disabled=false;
+  const old=document.getElementById('coinResult');if(old)old.textContent='';
+  try{if(typeof state!=='undefined'){snapshot();msg('コイン：'+result);save();render()}}catch(e){}
+ },1350);
+};
+})();
+</script>
 </html>
