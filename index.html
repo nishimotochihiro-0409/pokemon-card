@@ -323,7 +323,7 @@ window.onlineSearch=async function(next=false){
 </style>
 <script id="opening-hand-script">
 (function(){
- let currentDeck=null,remaining=[],hand=[],activeCard=null,benchCards=[],selectedIndex=null,usedCards=[],dragState=null,suppressNextClick=false,fieldMenu=null,energyAttachedThisTurn=false;
+ let currentDeck=null,remaining=[],hand=[],activeCard=null,benchCards=[],selectedIndex=null,usedCards=[],dragState=null,suppressNextClick=false,fieldMenu=null,energyAttachedThisTurn=false,practiceTurn=1;
  const panel=document.createElement('section');
  panel.id='openingHandPanel';panel.hidden=true;
  const host=document.createElement('div');host.id='openingHandHost';host.className='opening-hand-inline';
@@ -376,6 +376,59 @@ window.onlineSearch=async function(next=false){
   const back=node('button','戻る');back.onclick=()=>showHandActions(index);wrap.append(back);
   handDialogBody.append(wrap);handDialog.hidden=false;
  }
+ function evolutionStageNumber(card){
+  const raw=String(card.stage||card.evolutionStage||card.evolution||card.subtype||card.subType||'');
+  if(/2進化|stage\\s*2/i.test(raw))return 2;
+  if(/1進化|stage\\s*1/i.test(raw))return 1;
+  return pokemonStage(card)==='basic'?0:null;
+ }
+ function evolveFromName(card){
+  return String(card.evolvesFrom||card.evolveFrom||card.preEvolution||card.evolutionFrom||'').trim();
+ }
+ function evolvePokemon(index){
+  const evo=hand[index];if(!evo||pokemonStage(evo)==='not-pokemon')return;
+  if(practiceTurn<=1){alert('最初の自分の番には進化できません。');return}
+  if(pokemonStage(evo)==='unknown'){
+   const yes=confirm('このカードは進化ポケモンですか？\\nOK：進化カード ／ キャンセル：戻る');
+   if(!yes)return;
+   const key=cardIdentity(evo);if(key){stageOverrides[key]='evolved';try{localStorage.setItem(stageOverridesKey,JSON.stringify(stageOverrides))}catch(e){}}
+  }
+  if(pokemonStage(evo)!=='evolved'){alert('たねポケモンは進化カードとして使えません。');return}
+  const from=evolveFromName(evo);
+  const targets=[...(activeCard?[{card:activeCard,label:'バトル場',where:'active',i:0}]:[]),...benchCards.map((card,i)=>({card,label:'ベンチ '+(i+1),where:'bench',i}))];
+  const eligible=targets.filter(t=>Number(t.card._enteredTurn||1)<practiceTurn&&t.card._evolvedTurn!==practiceTurn);
+  handDialogBody.replaceChildren();
+  const wrap=node('div');wrap.className='real-energy-targets';
+  wrap.append(node('strong','進化先のポケモンを選ぶ'));
+  wrap.append(node('p',from?'進化元：'+from+'（一致するポケモンのみ選択できます）':'このカードには進化元のデータがありません。選択後、カードに書かれた進化元を確認してください。'));
+  const grid=node('div');grid.className='real-trash-grid';
+  for(const t of eligible){
+   const same=from&&String(t.card.name||'').trim()===from;
+   const btn=node('button');btn.type='button';btn.className='real-trash-card';
+   if(t.card.imageUrl){const img=node('img');img.src=t.card.imageUrl;img.alt=t.card.name||'ポケモン';btn.append(img)}
+   btn.append(node('span',t.label+'：'+(t.card.name||'ポケモン')));
+   if(from&&!same)btn.disabled=true;
+   btn.onclick=()=>{
+    if(!from&&!confirm('進化カードに書かれた進化元は「'+(t.card.name||'')+'」ですか？\\n違う場合はキャンセルしてください。'))return;
+    const beforeStage=evolutionStageNumber(t.card),afterStage=evolutionStageNumber(evo);
+    if(beforeStage!==null&&afterStage!==null&&afterStage!==beforeStage+1){alert('進化段階が一致しません。');return}
+    if(!confirm((t.card.name||'ポケモン')+'を'+(evo.name||'進化ポケモン')+'に進化させますか？'))return;
+    const evolved=hand.splice(index,1)[0];
+    evolved._attachedEnergy=energyList(t.card).slice();
+    evolved._evolutionStack=[...(t.card._evolutionStack||[]),t.card];
+    evolved._enteredTurn=t.card._enteredTurn;
+    evolved._evolvedTurn=practiceTurn;
+    evolved._damage=t.card._damage||0;
+    if(t.where==='active')activeCard=evolved;else benchCards[t.i]=evolved;
+    handDialog.hidden=true;selectedIndex=null;render();
+   };
+   grid.append(btn);
+  }
+  wrap.append(grid);
+  if(!eligible.length)wrap.append(node('p','今は進化できるポケモンがいません。場に出した次のターンから進化できます。'));
+  const back=node('button','戻る');back.onclick=()=>showHandActions(index);wrap.append(back);
+  handDialogBody.append(wrap);handDialog.hidden=false;
+ }
  function isBasicPokemon(card){return pokemonStage(card)==='basic'||pokemonStage(card)==='unknown'}
  function confirmBasicBeforePlacement(card){
   if(pokemonStage(card)!=='unknown')return pokemonStage(card)==='basic';
@@ -401,7 +454,7 @@ window.onlineSearch=async function(next=false){
   const reset=node('button','シャッフルして7枚引く');reset.type='button';reset.onclick=()=>start(currentDeck.id);
   const draw=node('button','山札から1枚引く');draw.type='button';draw.disabled=!remaining.length;draw.onclick=()=>{hand.push(remaining.pop());render()};
   const close=node('button','閉じる');close.type='button';close.onclick=()=>{currentDeck=null;activeCard=null;benchCards=[];selectedIndex=null;render()};
-  const nextTurn=node('button','次のターン（エネルギー権を回復）');nextTurn.type='button';nextTurn.onclick=()=>{energyAttachedThisTurn=false;render()};
+  const nextTurn=node('button','次のターン（エネルギー権を回復）');nextTurn.type='button';nextTurn.onclick=()=>{practiceTurn++;energyAttachedThisTurn=false;render()};
   actions.append(reset,draw,nextTurn,close);panel.append(actions);
   const grid=node('div');grid.className='opening-hand-grid';
   for(const [index,c] of hand.entries()){
@@ -459,10 +512,14 @@ window.onlineSearch=async function(next=false){
   const title=node('strong','このカードをどうする？');options.append(title);
   const active=node('button','バトル場に出す');active.disabled=!!activeCard||!isBasicPokemon(card);active.onclick=()=>{handDialog.hidden=true;placeReal(index,'active')};
   const bench=node('button','ベンチに出す');bench.disabled=benchCards.length>=5||!isBasicPokemon(card);bench.onclick=()=>{handDialog.hidden=true;placeReal(index,'bench')};
+  const stage=pokemonStage(card);
+  const evolve=node('button','進化させる');evolve.disabled=stage==='not-pokemon'||stage==='basic'||practiceTurn<=1;
+  evolve.onclick=()=>evolvePokemon(index);
   const use=node('button',isEnergyCard(card)?'ポケモンにつける':String(card.name||'').trim()==='ハイパーボール'?'効果を使う':'使用する');
   use.disabled=isEnergyCard(card)&&(energyAttachedThisTurn||(!activeCard&&!benchCards.length));
   use.onclick=()=>{if(isEnergyCard(card))attachEnergy(index);else if(String(card.name||'').trim()==='ハイパーボール')useHyperBall(index);else{handDialog.hidden=true;useReal(index)}};
   const cancel=node('button','戻る');cancel.onclick=()=>{handDialog.hidden=true;selectedIndex=null};
+  if(stage==='evolved'||stage==='unknown')options.append(evolve);
   options.append(active,bench,use,cancel);handDialogBody.append(imageWrap,options);
   handDialog.hidden=false;
  }
@@ -482,6 +539,7 @@ window.onlineSearch=async function(next=false){
     for(const eventName of ['pointerup','pointerleave','pointercancel'])el.addEventListener(eventName,()=>clearTimeout(timer));
     el.addEventListener('click',()=>{if(opened){opened=false;return}showFieldActions(card,zoneClass==='ref-own-active'?'active':'bench',fieldIndex)});
     el.addEventListener('keydown',e=>{if(e.key==='Enter')showFieldActions(card,zoneClass==='ref-own-active'?'active':'bench',fieldIndex)});
+    const stack=card._evolutionStack||[];if(stack.length){const badge=node('span','進化 '+stack.length+'回');badge.className='real-attached-energy-count';el.append(badge)}
     const attached=energyList(card);if(attached.length){const count=node('span','エネルギー '+attached.length+'枚');count.className='real-attached-energy-count';el.append(count)}
     area.append(el);
    }
@@ -524,6 +582,7 @@ window.onlineSearch=async function(next=false){
   if(where==='active'&&activeCard)return;
   if(where==='bench'&&benchCards.length>=5)return;
   hand.splice(index,1);selectedIndex=null;
+  card._enteredTurn=practiceTurn;card._evolvedTurn=null;
   if(where==='active')activeCard=card;else benchCards.push(card);
   render();
  }
@@ -645,7 +704,7 @@ window.onlineSearch=async function(next=false){
    for(let i=0;i<count;i++)cards.push({...c,count:1});
   }
   if(cards.length!==60){alert('60枚のデッキのみ初手練習できます。');return}
-  handDialog.hidden=true;energyAttachedThisTurn=false;currentDeck=d;remaining=shuffle(cards);hand=remaining.splice(-7);activeCard=null;benchCards=[];selectedIndex=null;usedCards=[];render();
+  handDialog.hidden=true;energyAttachedThisTurn=false;practiceTurn=1;currentDeck=d;remaining=shuffle(cards);hand=remaining.splice(-7);activeCard=null;benchCards=[];selectedIndex=null;usedCards=[];render();
   panel.scrollIntoView({behavior:'smooth',block:'start'});
  }
  window.startOpeningHand=start;
