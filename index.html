@@ -528,4 +528,27 @@ if(typeof oldRender==='function'){window.render=function(){oldRender();try{const
 #battlePage .touch-hand>h3 #myStat{display:none!important}
 #battlePage .touch-hand .opening-hand-heading{justify-content:center}
 #battlePage .touch-hand .opening-hand-heading strong{font-size:12px}
+</style><style id="battle-height-tight-v3">
+/* Keep the active Pokemon at roughly one card height, not a full-width empty panel. */
+#battlePage .future-mat.touch-board{gap:4px!important;padding:6px!important}
+#battlePage .touch-board .touch-active{min-height:0!important;height:auto!important;padding:5px 8px!important;align-content:center!important}
+#battlePage .touch-board .touch-active>.cards{min-height:0!important;align-items:center!important}
+#battlePage .touch-board .touch-active .card{min-height:110px!important;max-width:100px!important}
+#battlePage .touch-board .touch-active>h3{margin:0!important;line-height:1.15!important}
+#battlePage .touch-board .touch-active .touch-side-tools{gap:3px!important}
+#battlePage .touch-board .touch-active .touch-side-tools button{min-height:27px!important;padding:4px 5px!important}
+#battlePage .touch-board .touch-active .touch-side-tools select{padding:4px!important}
+#battlePage .touch-board .touch-active .touch-side-tools strong{line-height:1.2!important}
+#battlePage .touch-board .touch-active.opp-active{display:flex!important;flex-direction:column!important;justify-content:center!important;align-items:center!important;gap:3px!important;min-height:0!important;padding:5px!important}
+#battlePage .touch-board .touch-active.opp-active .cards{min-height:0!important}
+#battlePage .touch-board .touch-active.opp-active .card{min-height:110px!important}
+#battlePage .touch-board .zone:not(.touch-active){min-height:0!important}
+#battlePage .touch-board .touch-sides{gap:4px!important}
+#battlePage .touch-board .touch-sides span{padding:2px 5px!important}
+@media(max-width:600px){
+#battlePage .touch-board .touch-active{padding:4px!important}
+#battlePage .touch-board .touch-active .card{min-height:96px!important;max-width:78px!important}
+#battlePage .touch-board .touch-active.opp-active .card{min-height:96px!important}
+#battlePage .touch-board .touch-active .touch-side-tools button{min-height:25px!important;padding:3px 2px!important}
+}
 </style></html>
