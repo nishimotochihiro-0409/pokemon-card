@@ -428,7 +428,8 @@ window.onlineSearch=async function(next=false){
   const title=node('strong','このカードをどうする？');options.append(title);
   const active=node('button','バトル場に出す');active.disabled=!!activeCard||!isBasicPokemon(card);active.onclick=()=>{handDialog.hidden=true;placeReal(index,'active')};
   const bench=node('button','ベンチに出す');bench.disabled=benchCards.length>=5||!isBasicPokemon(card);bench.onclick=()=>{handDialog.hidden=true;placeReal(index,'bench')};
-  const use=node('button','使用する');use.onclick=()=>{handDialog.hidden=true;useReal(index)};
+  const use=node('button',String(card.name||'').trim()==='ハイパーボール'?'効果を使う':'使用する');
+  use.onclick=()=>{if(String(card.name||'').trim()==='ハイパーボール')useHyperBall(index);else{handDialog.hidden=true;useReal(index)}};
   const cancel=node('button','戻る');cancel.onclick=()=>{handDialog.hidden=true;selectedIndex=null};
   options.append(active,bench,use,cancel);handDialogBody.append(imageWrap,options);
   handDialog.hidden=false;
@@ -492,6 +493,59 @@ window.onlineSearch=async function(next=false){
   hand.splice(index,1);selectedIndex=null;
   if(where==='active')activeCard=card;else benchCards.push(card);
   render();
+ }
+ function useHyperBall(index){
+  const source=hand[index];if(!source)return;
+  const discardChoices=hand.map((card,i)=>({card,i})).filter(x=>x.i!==index);
+  if(discardChoices.length<2){alert('ハイパーボールを使うには、ほかに手札が2枚必要です。');return}
+  handDialog.hidden=true;
+  let chosen=[];
+  const modal=node('div');modal.className='real-effect-dialog';
+  const content=node('div');content.className='real-effect-content';modal.append(content);document.body.append(modal);
+  const close=()=>modal.remove();
+  function cardButton(card,label,onClick){
+   const btn=node('button');btn.type='button';btn.className='real-effect-card';
+   if(card.imageUrl){const img=node('img');img.src=card.imageUrl;img.alt=card.name||'カード';img.loading='lazy';btn.append(img)}
+   btn.append(node('span',label||card.name||'カード'));btn.onclick=onClick;return btn;
+  }
+  function header(title,description){
+   content.replaceChildren();
+   const bar=node('div');bar.className='real-trash-header';bar.append(node('strong',title));
+   const cancel=node('button','キャンセル');cancel.onclick=close;bar.append(cancel);content.append(bar);
+   if(description)content.append(node('p',description));
+  }
+  function chooseDiscard(){
+   header('ハイパーボール：手札を2枚トラッシュ','ハイパーボール以外の手札を2枚選んでね。選択中 '+chosen.length+'/2');
+   const grid=node('div');grid.className='real-trash-grid';
+   for(const {card,i} of discardChoices){
+    const btn=cardButton(card,card.name,()=>{chosen=chosen.includes(i)?chosen.filter(x=>x!==i):[...chosen,i].slice(0,2);chooseDiscard()});
+    if(chosen.includes(i))btn.classList.add('is-picked');grid.append(btn);
+   }
+   content.append(grid);
+   const proceed=node('button','2枚をトラッシュして山札を見る');proceed.disabled=chosen.length!==2;
+   proceed.onclick=()=>{
+    // Resolve cost only after the player has confirmed both cards.
+    const removed=chosen.map(i=>hand[i]);
+    for(const i of [...chosen,index].sort((x,y)=>y-x))hand.splice(i,1);
+    usedCards.push(...removed,source);
+    showSearch();
+   };
+   content.append(proceed);
+  }
+  function showSearch(){
+   header('山札からポケモンを1枚選ぶ','ポケモンを1枚選ぶか、見つからなかったことにして終了できます。');
+   const grid=node('div');grid.className='real-trash-grid';
+   const candidates=remaining.map((card,i)=>({card,i})).filter(x=>pokemonStage(x.card)!=='not-pokemon');
+   for(const {card,i} of candidates)grid.append(cardButton(card,card.name,()=>{
+    hand.push(remaining.splice(i,1)[0]);remaining=shuffle(remaining);close();render();
+   }));
+   content.append(grid);
+   const skip=node('button','選ばずに終了（山札をシャッフル）');
+   skip.onclick=()=>{remaining=shuffle(remaining);close();render()};content.append(skip);
+   if(!candidates.length)content.append(node('p','山札にポケモンがありません。'));
+   render();
+  }
+  chooseDiscard();
  }
  function useReal(index){
   const card=hand[index];if(!card)return;
@@ -1067,4 +1121,15 @@ window.addEventListener('load',fixDeckPicker);
 .real-trash-card{border:1px solid #d7c4ee;border-radius:9px;background:white;padding:5px;cursor:pointer;min-width:0}
 .real-trash-card img{display:block;width:100%;aspect-ratio:0.72;object-fit:contain}
 .real-trash-card span{display:block;font-size:11px;overflow-wrap:anywhere}
+</style><style id="hyper-ball-effect-v1">
+.real-effect-dialog{position:fixed;inset:0;z-index:99996;background:#191028c9;display:flex;justify-content:center;align-items:center;padding:14px;box-sizing:border-box}
+.real-effect-content{background:#f8f3ff;border:2px solid #bca0e9;border-radius:16px;padding:16px;width:min(94vw,800px);max-height:88vh;overflow:auto;box-sizing:border-box}
+.real-effect-content>p{font-size:13px}
+.real-effect-content>.real-trash-grid{margin:12px 0}
+.real-effect-card{border:2px solid #d7c4ee;border-radius:9px;background:white;padding:5px;cursor:pointer;min-width:0}
+.real-effect-card img{display:block;width:100%;aspect-ratio:.72;object-fit:contain}
+.real-effect-card span{display:block;font-size:11px;overflow-wrap:anywhere}
+.real-effect-card.is-picked{border:3px solid #6b40dd;background:#e9dcff}
+.real-effect-content>button{display:block;margin:12px auto 0;min-height:40px;padding:8px 16px;border-radius:9px}
+.real-effect-content>button:disabled{opacity:.4}
 </style></html>
