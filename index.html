@@ -332,6 +332,17 @@ window.onlineSearch=async function(next=false){
  handZone.append(host);
  host.append(panel);
  const node=(tag,text)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;return e};
+ function isBasicPokemon(card){
+  const category=String(card.category||card.supertype||card.cardType||'').trim();
+  const stage=String(card.stage||card.evolutionStage||card.evolution||card.subtype||card.subType||'').trim();
+  const name=String(card.name||'');
+  if(!/^(ポケモン|pokemon|pokémon)$/i.test(category))return false;
+  if(/^(1進化|2進化|stage ?1|stage ?2|進化|vmax|vstar|mega)$/i.test(stage))return false;
+  if(/^(たね|basic)$/i.test(stage))return true;
+  if(/^(M|メガ)[・\s]?|VMAX|VSTAR|exの進化/i.test(name))return false;
+  // Imported cards without stage metadata must not be silently treated as Basic.
+  return false;
+ }
  const secureRandom=(max)=>{
   if(!globalThis.crypto||!crypto.getRandomValues)return Math.floor(Math.random()*max);
   const a=new Uint32Array(1),limit=Math.floor(4294967296/max)*max;
@@ -341,22 +352,22 @@ window.onlineSearch=async function(next=false){
  function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=secureRandom(i+1);[arr[i],arr[j]]=[arr[j],arr[i]]}return arr}
  function render(){
   panel.replaceChildren();
-  if(!currentDeck){panel.hidden=true;return}
+  if(!currentDeck){panel.hidden=true;renderPlaced();return}
   panel.hidden=false;
   renderPlaced();enableDrops();
 
   const actions=node('div');actions.className='opening-hand-actions';
   const reset=node('button','シャッフルして7枚引く');reset.type='button';reset.onclick=()=>start(currentDeck.id);
   const draw=node('button','山札から1枚引く');draw.type='button';draw.disabled=!remaining.length;draw.onclick=()=>{hand.push(remaining.pop());render()};
-  const close=node('button','閉じる');close.type='button';close.onclick=()=>{currentDeck=null;render()};
+  const close=node('button','閉じる');close.type='button';close.onclick=()=>{currentDeck=null;activeCard=null;benchCards=[];selectedIndex=null;render()};
   actions.append(reset,draw,close);panel.append(actions);
   const grid=node('div');grid.className='opening-hand-grid';
   const actionBar=node('div');actionBar.className='selected-card-actionbar';
   if(selectedIndex!==null&&hand[selectedIndex]){
    const selected=hand[selectedIndex];
    actionBar.append(node('strong',selected.name||'カード'));
-   const activeButton=node('button','バトル場へ');activeButton.type='button';activeButton.disabled=!!activeCard;activeButton.onclick=()=>placeReal(selectedIndex,'active');
-   const benchButton=node('button','ベンチへ');benchButton.type='button';benchButton.disabled=benchCards.length>=5;benchButton.onclick=()=>placeReal(selectedIndex,'bench');
+   const activeButton=node('button','バトル場へ');activeButton.type='button';activeButton.disabled=!!activeCard||!isBasicPokemon(selected);activeButton.onclick=()=>placeReal(selectedIndex,'active');
+   const benchButton=node('button','ベンチへ');benchButton.type='button';benchButton.disabled=benchCards.length>=5||!isBasicPokemon(selected);benchButton.onclick=()=>placeReal(selectedIndex,'bench');
    const useButton=node('button','使用する');useButton.type='button';useButton.onclick=()=>useReal(selectedIndex);
    const cancelButton=node('button','キャンセル');cancelButton.type='button';cancelButton.onclick=()=>{selectedIndex=null;render()};
    actionBar.append(activeButton,benchButton,useButton,cancelButton);
@@ -455,6 +466,7 @@ window.onlineSearch=async function(next=false){
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enableDrops);else setTimeout(enableDrops,0);
  function placeReal(index,where){
   const card=hand[index];if(!card)return;
+  if(!isBasicPokemon(card)){alert('バトル場・ベンチに置けるのは「たねポケモン」だけです。サポート・グッズ・エネルギー・進化ポケモンは置けません。');return}
   if(where==='active'&&activeCard)return;
   if(where==='bench'&&benchCards.length>=5)return;
   hand.splice(index,1);selectedIndex=null;
@@ -963,4 +975,10 @@ window.addEventListener('load',fixDeckPicker);
 #battlePage .real-field-menu{grid-column:1/-1!important;display:flex;flex-wrap:wrap;justify-content:center;gap:6px;padding:10px;border:1px solid #bea4e8;border-radius:12px;background:#faf5ff;z-index:10}
 #battlePage .real-field-menu strong{width:100%;text-align:center}
 #battlePage .real-field-menu button{min-width:85px}
+</style><style id="real-placement-center-v4">
+#battlePage .ptcgl-reference .ref-own-active{position:relative!important}
+#battlePage .ptcgl-reference .ref-own-active>#realActiveCards{position:absolute!important;left:50%!important;top:55%!important;transform:translate(-50%,-50%)!important;display:flex!important;justify-content:center!important;align-items:center!important;width:auto!important;max-width:150px!important;margin:0!important;z-index:4!important}
+#battlePage .ptcgl-reference .ref-own-active>#realActiveCards .real-play-card{width:95px!important}
+#battlePage .ptcgl-reference .ref-own-active>#realActiveCards .real-play-card img{width:100%!important}
+#battlePage .ptcgl-reference .ref-own-active>.left-tools,#battlePage .ptcgl-reference .ref-own-active>.right-tools{z-index:2}
 </style></html>
