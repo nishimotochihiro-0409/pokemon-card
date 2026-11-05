@@ -551,4 +551,19 @@ if(typeof oldRender==='function'){window.render=function(){oldRender();try{const
 #battlePage .touch-board .touch-active.opp-active .card{min-height:96px!important}
 #battlePage .touch-board .touch-active .touch-side-tools button{min-height:25px!important;padding:3px 2px!important}
 }
+</style><style id="battle-frame-width-v4">
+/* The earlier change only reduced height. This version constrains actual frame widths. */
+#battlePage .future-mat.touch-board{display:flex!important;flex-direction:column!important;align-items:center!important;gap:5px!important}
+#battlePage .touch-board>.zone{width:100%;box-sizing:border-box}
+#battlePage .touch-board>.zone.touch-active{justify-self:center!important;align-self:center!important;box-sizing:border-box}
+#battlePage .touch-board>.zone.touch-active:not(:has(.touch-side-tools)){width:190px!important;max-width:100%!important;min-height:0!important;padding:6px!important}
+#battlePage .touch-board>.zone.touch-active:has(.touch-side-tools){width:min(100%,680px)!important;max-width:680px!important;min-height:0!important;grid-template-columns:minmax(110px,1fr) 105px minmax(110px,1fr)!important;grid-template-rows:auto auto!important}
+#battlePage .touch-board>.zone.touch-active:has(.touch-side-tools)>.cards{grid-column:2!important;grid-row:2!important}
+#battlePage .touch-board>.zone.touch-active:has(.touch-side-tools)>.touch-side-tools{grid-row:1 / 3!important}
+#battlePage .touch-board>.zone.touch-active:has(.touch-side-tools)>.touch-side-tools.right-tools{grid-column:3!important}
+#battlePage .touch-board>.zone.touch-active:has(.touch-side-tools)>.touch-side-tools.left-tools{grid-column:1!important}
+#battlePage .touch-board>.zone.touch-active:has(.touch-side-tools)>.attack-menu{grid-column:1 / -1!important}
+#battlePage .touch-board>.touch-sides{width:min(100%,680px)!important}
+@media(max-width:600px){#battlePage .touch-board>.zone.touch-active:not(:has(.touch-side-tools)){width:150px!important}
+#battlePage .touch-board>.zone.touch-active:has(.touch-side-tools){grid-template-columns:minmax(75px,1fr) 80px minmax(75px,1fr)!important;width:100%!important}}
 </style></html>
