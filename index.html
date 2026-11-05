@@ -340,8 +340,9 @@ window.onlineSearch=async function(next=false){
   if(/^(1進化|2進化|stage ?1|stage ?2|進化|vmax|vstar|mega)$/i.test(stage))return false;
   if(/^(たね|basic)$/i.test(stage))return true;
   if(/^(M|メガ)[・\s]?|VMAX|VSTAR|exの進化/i.test(name))return false;
-  // Imported cards without stage metadata must not be silently treated as Basic.
-  return false;
+  // The official-deck importer often supplies category but no evolution stage.
+  // Permit Pokemon with missing stage for placement practice; reject known evolutions above.
+  return !stage;
  }
  const secureRandom=(max)=>{
   if(!globalThis.crypto||!crypto.getRandomValues)return Math.floor(Math.random()*max);
