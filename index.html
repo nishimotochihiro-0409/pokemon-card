@@ -501,6 +501,11 @@ left.append(picker);
 const note=document.createElement('div');note.className='touch-damage-readout';note.textContent='自分のポケモンを選択して操作';left.append(note);
 heading(right,'ワザ・コイン');
 move('攻撃を選ぶ',right);move('コイン表裏',right);move('エネルギー +1',right);
+const coinSlot=document.createElement('div');coinSlot.id='battleCoinSlot';coinSlot.style.cssText='display:flex;flex-direction:column;align-items:center;gap:5px;padding:5px';
+coinSlot.innerHTML='<div id="battleCoinDisk" style="width:58px;height:58px;border-radius:50%;border:4px solid #cfa64e;background:linear-gradient(135deg,#ffeaa1,#e7b94d);display:grid;place-items:center;font-size:22px;font-weight:bold;color:#6d4a18">表</div><strong id="battleCoinText" aria-live="polite" style="font-size:12px">コイン未使用</strong>';
+const coinButton=[...right.querySelectorAll('button')].find(x=>x.textContent.includes('コイン表裏'));
+if(coinButton){coinButton.textContent='コインを投げる';coinButton.after(coinSlot);}
+
 own.append(left,right,menu);
 const oldRender=window.render;
 if(typeof oldRender==='function'){window.render=function(){oldRender();try{const c=state?.field?.[0];note.textContent=c?'バトル場：'+(c.damage||0)+'ダメージ / エネ '+(c.energy||0):'バトル場は空です'}catch(e){}}}
@@ -670,38 +675,36 @@ for(const b of oldHandButtons){const row=b.closest('.row');if(row)row.classList.
 @keyframes battle-coin-spin{from{transform:rotateY(0deg)}to{transform:rotateY(360deg)}}
 @media(prefers-reduced-motion:reduce){#battlePage .battle-coin.is-spinning{animation-duration:.45s}}
 </style>
-<script id="animated-coin-v1-script">
+
+<style id="coin-reliable-v2">
+#battlePage #coinResult{display:none!important}
+#battlePage #battleCoinDisk{transform-style:preserve-3d;transition:transform 1.7s cubic-bezier(.15,.65,.25,1);backface-visibility:visible}
+#battlePage #battleCoinSlot{min-height:82px}
+@media(prefers-reduced-motion:reduce){#battlePage #battleCoinDisk{transition-duration:.1s}}
+</style>
+<script id="coin-reliable-v2-js">
 (function(){
-const right=document.querySelector('#battlePage .ref-own-active .right-tools')||document.querySelector('#battlePage .right-tools');
-if(!right)return;
-const wrap=document.createElement('div');wrap.className='battle-coin-wrap';
-const coin=document.createElement('div');coin.className='battle-coin is-heads';coin.setAttribute('role','img');coin.setAttribute('aria-label','コイン');
-const front=document.createElement('div');front.className='battle-coin-face';front.textContent='表';
-const back=document.createElement('div');back.className='battle-coin-face battle-coin-back';back.textContent='裏';
-coin.append(front,back);
-const label=document.createElement('div');label.className='battle-coin-result';label.setAttribute('aria-live','polite');label.textContent='コインを投げよう';
-wrap.append(coin,label);
-const trigger=[...right.querySelectorAll('button')].find(b=>b.textContent.includes('コイン表裏'));
-if(trigger)trigger.before(wrap);else right.append(wrap);
-let spinning=false;
+let rotation=0,locked=false;
 window.flipCoin=function(){
- if(spinning)return;
- spinning=true;
- if(trigger)trigger.disabled=true;
+ const disk=document.getElementById('battleCoinDisk'),label=document.getElementById('battleCoinText');
+ if(!disk||!label||locked)return;
+ locked=true;
+ const button=[...document.querySelectorAll('#battlePage button')].find(b=>b.textContent==='コインを投げる');
+ if(button)button.disabled=true;
  label.textContent='回転中…';
- coin.classList.remove('is-heads','is-tails');coin.classList.add('is-spinning');
- const bits=new Uint32Array(1);
- if(globalThis.crypto&&crypto.getRandomValues)crypto.getRandomValues(bits);else bits[0]=Math.floor(Math.random()*4294967296);
- const result=bits[0]%2===0?'表':'裏';
- window.setTimeout(()=>{
-  coin.classList.remove('is-spinning');
-  coin.classList.add(result==='表'?'is-heads':'is-tails');
-  label.textContent='結果：'+result;
-  spinning=false;if(trigger)trigger.disabled=false;
+ const a=new Uint32Array(1);if(crypto&&crypto.getRandomValues)crypto.getRandomValues(a);else a[0]=Math.floor(Math.random()*4294967296);
+ const result=a[0]%2===0?'表':'裏';
+ const next=((rotation/180)%2===0?0:1);
+ const target=result==='表'?0:1;
+ rotation+=180*(10+((target-next+2)%2));
+ disk.style.transform='rotateY('+rotation+'deg)';
+ const finish=()=>{
+  disk.textContent=result;label.textContent='結果：'+result;locked=false;
+  if(button)button.disabled=false;
   const old=document.getElementById('coinResult');if(old)old.textContent='';
-  try{if(typeof state!=='undefined'){snapshot();msg('コイン：'+result);save();render()}}catch(e){}
- },1350);
+  try{snapshot();msg('コイン：'+result);save();render()}catch(e){}
+ };
+ setTimeout(finish,window.matchMedia('(prefers-reduced-motion: reduce)').matches?150:1750);
 };
 })();
-</script>
-</html>
+</script></html>
