@@ -503,7 +503,7 @@ heading(right,'ワザ・コイン');
 move('エネルギー +1',left);
 move('攻撃を選ぶ',right);move('コイン表裏',right);
 const coinSlot=document.createElement('div');coinSlot.id='battleCoinSlot';coinSlot.style.cssText='display:flex;flex-direction:column;align-items:center;gap:5px;padding:5px';
-coinSlot.innerHTML='<div id="battleCoinDisk" class="pikachu-coin"><div class="pikachu-coin-front"><span class="pikachu-ear ear-left"></span><span class="pikachu-ear ear-right"></span><span class="pikachu-eye eye-left"></span><span class="pikachu-eye eye-right"></span><span class="pikachu-cheek cheek-left"></span><span class="pikachu-cheek cheek-right"></span><span class="pikachu-nose"></span><span class="pikachu-mouth"></span></div><div class="pikachu-coin-back"></div></div><strong id="battleCoinText" aria-live="polite" style="font-size:12px">コイン未使用</strong>';
+coinSlot.innerHTML='<div id="battleCoinDisk" class="pikachu-coin"><div class="pikachu-coin-front"><svg viewBox="0 0 100 100" class="pika-medallion" aria-label="ピカチュウのシルエット"><path fill="#6c4611" d="M30 36 L12 6 Q9 0 17 3 L43 27 Q50 25 58 28 L84 3 Q92 0 89 9 L72 39 Q83 49 82 64 Q81 80 65 85 L35 85 Q18 79 18 63 Q17 47 30 36 Z"/><path fill="#6c4611" d="M70 64 L95 52 L85 68 L99 73 L80 84 L84 93 L64 83 Z"/><path fill="#33210e" d="M13 6 L24 21 L20 24 L14 14 Z M87 7 L78 23 L74 20 L84 5 Z"/></svg></div><div class="pikachu-coin-back"></div></div><strong id="battleCoinText" aria-live="polite" style="font-size:12px">コイン未使用</strong>';
 const coinButton=[...right.querySelectorAll('button')].find(x=>x.textContent.includes('コイン表裏'));
 if(coinButton){coinButton.textContent='コインを投げる';coinButton.after(coinSlot);}
 
@@ -734,4 +734,11 @@ window.flipCoin=function(){
 #battlePage .pikachu-coin-front::after{content:"";position:absolute;left:14px;top:24px;width:29px;height:27px;background:#74500e;border-radius:48% 48% 43% 43%;box-shadow:0 1px 1px #67460c22}
 #battlePage .pikachu-coin-front::before{content:"";position:absolute;right:3px;top:31px;width:17px;height:19px;background:#74500e;clip-path:polygon(0 12%,100% 0,75% 43%,100% 60%,28% 100%,49% 57%,0 67%);z-index:2}
 #battlePage .pikachu-coin-back{background:radial-gradient(circle at 30% 20%,#454545,#121212 65%,#000)!important;border-color:#4b4b4b!important;box-shadow:inset 0 0 0 3px #888,0 3px 8px #2228!important}
+</style><style id="pika-svg-coin-v5">
+#battlePage #battleCoinDisk.pikachu-coin{width:66px!important;height:66px!important;border:0!important;background:none!important;box-shadow:none!important;position:relative!important;transform-style:preserve-3d!important}
+#battlePage #battleCoinDisk .pikachu-coin-front,#battlePage #battleCoinDisk .pikachu-coin-back{position:absolute!important;inset:0!important;border-radius:50%!important;backface-visibility:hidden!important;-webkit-backface-visibility:hidden!important;box-sizing:border-box!important}
+#battlePage #battleCoinDisk .pikachu-coin-front{background:radial-gradient(circle at 25% 18%,#fff9c5,#f5d44b 42%,#c78c11 95%)!important;border:4px solid #b57b08!important;box-shadow:inset 0 0 0 2px #ffeb8c,0 3px 7px #5a401b66!important;display:grid!important;place-items:center!important}
+#battlePage #battleCoinDisk .pikachu-coin-front::before,#battlePage #battleCoinDisk .pikachu-coin-front::after{content:none!important;display:none!important}
+#battlePage #battleCoinDisk .pika-medallion{width:84%;height:84%;display:block}
+#battlePage #battleCoinDisk .pikachu-coin-back{transform:rotateY(180deg)!important;background:radial-gradient(circle at 25% 20%,#444,#080808 75%)!important;border:4px solid #b88921!important;box-shadow:inset 0 0 0 2px #d9b654,0 3px 7px #15151566!important}
 </style></html>
