@@ -323,7 +323,7 @@ window.onlineSearch=async function(next=false){
 </style>
 <script id="opening-hand-script">
 (function(){
- let currentDeck=null,remaining=[],hand=[],activeCard=null,benchCards=[],selectedIndex=null,usedCards=[],dragState=null,suppressNextClick=false,fieldMenu=null;
+ let currentDeck=null,remaining=[],hand=[],activeCard=null,benchCards=[],selectedIndex=null,usedCards=[],dragState=null,suppressNextClick=false,fieldMenu=null,energyAttachedThisTurn=false;
  const panel=document.createElement('section');
  panel.id='openingHandPanel';panel.hidden=true;
  const host=document.createElement('div');host.id='openingHandHost';host.className='opening-hand-inline';
@@ -345,6 +345,36 @@ window.onlineSearch=async function(next=false){
   const name=String(card.name||'');
   if(/(VMAX|VSTAR)$/i.test(name))return 'evolved';
   return stageOverrides[cardIdentity(card)]||'unknown';
+ }
+ function isEnergyCard(card){
+  const category=String(card.category||card.supertype||card.cardType||'');
+  return /エネルギー|energy/i.test(category);
+ }
+ function energyList(card){return Array.isArray(card._attachedEnergy)?card._attachedEnergy:[]}
+ function attachEnergy(index){
+  const energy=hand[index];if(!energy||!isEnergyCard(energy))return;
+  if(energyAttachedThisTurn){alert('手札からエネルギーをつけられるのは、通常1ターンに1枚までです。');return}
+  const targets=[...(activeCard?[{card:activeCard,label:'バトル場'}]:[]),...benchCards.map((card,i)=>({card,label:'ベンチ '+(i+1)}))];
+  if(!targets.length){alert('先にポケモンをバトル場かベンチに出してください。');return}
+  handDialogBody.replaceChildren();
+  const wrap=node('div');wrap.className='real-energy-targets';
+  wrap.append(node('strong','エネルギーをつけるポケモンを選択'));
+  const grid=node('div');grid.className='real-trash-grid';
+  for(const target of targets){
+   const btn=node('button');btn.type='button';btn.className='real-trash-card';
+   if(target.card.imageUrl){const img=node('img');img.src=target.card.imageUrl;img.alt=target.card.name||'ポケモン';btn.append(img)}
+   btn.append(node('span',target.label+'：'+(target.card.name||'ポケモン')+'（エネ '+energyList(target.card).length+'枚）'));
+   btn.onclick=()=>{
+    if(!confirm((energy.name||'エネルギー')+'を '+(target.card.name||'ポケモン')+' につけますか？'))return;
+    if(!Array.isArray(target.card._attachedEnergy))target.card._attachedEnergy=[];
+    target.card._attachedEnergy.push(hand.splice(index,1)[0]);
+    energyAttachedThisTurn=true;handDialog.hidden=true;selectedIndex=null;render();
+   };
+   grid.append(btn);
+  }
+  wrap.append(grid);
+  const back=node('button','戻る');back.onclick=()=>showHandActions(index);wrap.append(back);
+  handDialogBody.append(wrap);handDialog.hidden=false;
  }
  function isBasicPokemon(card){return pokemonStage(card)==='basic'||pokemonStage(card)==='unknown'}
  function confirmBasicBeforePlacement(card){
@@ -371,7 +401,8 @@ window.onlineSearch=async function(next=false){
   const reset=node('button','シャッフルして7枚引く');reset.type='button';reset.onclick=()=>start(currentDeck.id);
   const draw=node('button','山札から1枚引く');draw.type='button';draw.disabled=!remaining.length;draw.onclick=()=>{hand.push(remaining.pop());render()};
   const close=node('button','閉じる');close.type='button';close.onclick=()=>{currentDeck=null;activeCard=null;benchCards=[];selectedIndex=null;render()};
-  actions.append(reset,draw,close);panel.append(actions);
+  const nextTurn=node('button','次のターン（エネルギー権を回復）');nextTurn.type='button';nextTurn.onclick=()=>{energyAttachedThisTurn=false;render()};
+  actions.append(reset,draw,nextTurn,close);panel.append(actions);
   const grid=node('div');grid.className='opening-hand-grid';
   for(const [index,c] of hand.entries()){
    const card=node('div');card.className='opening-hand-card';
@@ -428,8 +459,9 @@ window.onlineSearch=async function(next=false){
   const title=node('strong','このカードをどうする？');options.append(title);
   const active=node('button','バトル場に出す');active.disabled=!!activeCard||!isBasicPokemon(card);active.onclick=()=>{handDialog.hidden=true;placeReal(index,'active')};
   const bench=node('button','ベンチに出す');bench.disabled=benchCards.length>=5||!isBasicPokemon(card);bench.onclick=()=>{handDialog.hidden=true;placeReal(index,'bench')};
-  const use=node('button',String(card.name||'').trim()==='ハイパーボール'?'効果を使う':'使用する');
-  use.onclick=()=>{if(String(card.name||'').trim()==='ハイパーボール')useHyperBall(index);else{handDialog.hidden=true;useReal(index)}};
+  const use=node('button',isEnergyCard(card)?'ポケモンにつける':String(card.name||'').trim()==='ハイパーボール'?'効果を使う':'使用する');
+  use.disabled=isEnergyCard(card)&&(energyAttachedThisTurn||(!activeCard&&!benchCards.length));
+  use.onclick=()=>{if(isEnergyCard(card))attachEnergy(index);else if(String(card.name||'').trim()==='ハイパーボール')useHyperBall(index);else{handDialog.hidden=true;useReal(index)}};
   const cancel=node('button','戻る');cancel.onclick=()=>{handDialog.hidden=true;selectedIndex=null};
   options.append(active,bench,use,cancel);handDialogBody.append(imageWrap,options);
   handDialog.hidden=false;
@@ -450,6 +482,7 @@ window.onlineSearch=async function(next=false){
     for(const eventName of ['pointerup','pointerleave','pointercancel'])el.addEventListener(eventName,()=>clearTimeout(timer));
     el.addEventListener('click',()=>{if(opened){opened=false;return}showFieldActions(card,zoneClass==='ref-own-active'?'active':'bench',fieldIndex)});
     el.addEventListener('keydown',e=>{if(e.key==='Enter')showFieldActions(card,zoneClass==='ref-own-active'?'active':'bench',fieldIndex)});
+    const attached=energyList(card);if(attached.length){const count=node('span','エネルギー '+attached.length+'枚');count.className='real-attached-energy-count';el.append(count)}
     area.append(el);
    }
   }
@@ -457,7 +490,7 @@ window.onlineSearch=async function(next=false){
  function showFieldActions(card,where,index){
   if(fieldMenu)fieldMenu.remove();
   const menu=node('div');menu.className='real-field-menu';fieldMenu=menu;
-  menu.append(node('strong',card.name||'カード'));
+  menu.append(node('strong',(card.name||'カード')+' ／ エネルギー '+energyList(card).length+'枚'));
   const attack=node('button','ワザを使う');attack.onclick=()=>{alert('ワザの効果はまだ自動処理できません。');menu.remove()};
   const retreat=node('button','にげる');retreat.onclick=()=>{
    if(where!=='active'||!benchCards.length){alert('ベンチにポケモンが必要です。');return}
@@ -612,7 +645,7 @@ window.onlineSearch=async function(next=false){
    for(let i=0;i<count;i++)cards.push({...c,count:1});
   }
   if(cards.length!==60){alert('60枚のデッキのみ初手練習できます。');return}
-  handDialog.hidden=true;currentDeck=d;remaining=shuffle(cards);hand=remaining.splice(-7);activeCard=null;benchCards=[];selectedIndex=null;usedCards=[];render();
+  handDialog.hidden=true;energyAttachedThisTurn=false;currentDeck=d;remaining=shuffle(cards);hand=remaining.splice(-7);activeCard=null;benchCards=[];selectedIndex=null;usedCards=[];render();
   panel.scrollIntoView({behavior:'smooth',block:'start'});
  }
  window.startOpeningHand=start;
@@ -1148,4 +1181,9 @@ window.addEventListener('load',fixDeckPicker);
 .real-deck-summary{margin:8px 0;font-size:13px}
 .real-effect-card.view-only{opacity:.85;cursor:default;background:#f4f1f7}
 .real-effect-card:disabled{color:inherit}
+</style><style id="energy-attachment-v1">
+#battlePage .real-play-card .real-attached-energy-count{display:block!important;font-size:11px!important;font-weight:700!important;background:#fff8d0!important;color:#4b3a10!important;border-radius:6px!important;padding:2px 4px!important;margin-top:3px!important;text-align:center!important}
+.real-energy-targets{width:min(80vw,600px);max-height:80vh;overflow:auto;display:flex;flex-direction:column;gap:12px}
+.real-energy-targets>strong{text-align:center}
+.real-energy-targets>button{align-self:center;padding:8px 20px}
 </style></html>
