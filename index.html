@@ -323,7 +323,7 @@ window.onlineSearch=async function(next=false){
 </style>
 <script id="opening-hand-script">
 (function(){
- let currentDeck=null,remaining=[],hand=[],activeCard=null,benchCards=[],selectedIndex=null,usedCards=[],dragState=null,suppressNextClick=false,fieldMenu=null,energyAttachedThisTurn=false,practiceTurn=1;
+ let currentDeck=null,remaining=[],hand=[],activeCard=null,benchCards=[],selectedIndex=null,usedCards=[],dragState=null,suppressNextClick=false,fieldMenu=null,energyAttachedThisTurn=false,practiceTurn=1,attackUsedThisTurn=false;
  const panel=document.createElement('section');
  panel.id='openingHandPanel';panel.hidden=true;
  const host=document.createElement('div');host.id='openingHandHost';host.className='opening-hand-inline';
@@ -454,7 +454,7 @@ window.onlineSearch=async function(next=false){
   const reset=node('button','シャッフルして7枚引く');reset.type='button';reset.onclick=()=>start(currentDeck.id);
   const draw=node('button','山札から1枚引く');draw.type='button';draw.disabled=!remaining.length;draw.onclick=()=>{hand.push(remaining.pop());render()};
   const close=node('button','閉じる');close.type='button';close.onclick=()=>{currentDeck=null;activeCard=null;benchCards=[];selectedIndex=null;render()};
-  const nextTurn=node('button','次のターン（エネルギー権を回復）');nextTurn.type='button';nextTurn.onclick=()=>{practiceTurn++;energyAttachedThisTurn=false;render()};
+  const nextTurn=node('button','次のターン（エネルギー権を回復）');nextTurn.type='button';nextTurn.onclick=()=>{practiceTurn++;energyAttachedThisTurn=false;attackUsedThisTurn=false;render()};
   actions.append(reset,draw,nextTurn,close);panel.append(actions);
   const grid=node('div');grid.className='opening-hand-grid';
   for(const [index,c] of hand.entries()){
@@ -539,6 +539,7 @@ window.onlineSearch=async function(next=false){
     for(const eventName of ['pointerup','pointerleave','pointercancel'])el.addEventListener(eventName,()=>clearTimeout(timer));
     el.addEventListener('click',()=>{if(opened){opened=false;return}showFieldActions(card,zoneClass==='ref-own-active'?'active':'bench',fieldIndex)});
     el.addEventListener('keydown',e=>{if(e.key==='Enter')showFieldActions(card,zoneClass==='ref-own-active'?'active':'bench',fieldIndex)});
+    if(Number(card._damage||0)>0){const dmg=node('span','ダメージ '+card._damage);dmg.className='real-attached-energy-count real-damage-count';el.append(dmg)}
     const stack=card._evolutionStack||[];if(stack.length){const badge=node('span','進化 '+stack.length+'回');badge.className='real-attached-energy-count';el.append(badge)}
     const attached=energyList(card);if(attached.length){const count=node('span','エネルギー '+attached.length+'枚');count.className='real-attached-energy-count';el.append(count)}
     area.append(el);
@@ -549,7 +550,38 @@ window.onlineSearch=async function(next=false){
   if(fieldMenu)fieldMenu.remove();
   const menu=node('div');menu.className='real-field-menu';fieldMenu=menu;
   menu.append(node('strong',(card.name||'カード')+' ／ エネルギー '+energyList(card).length+'枚'));
-  const attack=node('button','ワザを使う');attack.onclick=()=>{alert('ワザの効果はまだ自動処理できません。');menu.remove()};
+  const attack=node('button','ワザを使う');
+  attack.disabled=where!=='active'||attackUsedThisTurn;
+  attack.onclick=()=>{
+   menu.remove();fieldMenu=null;
+   const attacks=Array.isArray(card.attacks)?card.attacks:Array.isArray(card.moves)?card.moves:[];
+   const overlay=node('div');overlay.className='real-effect-dialog';
+   const content=node('div');content.className='real-effect-content';overlay.append(content);document.body.append(overlay);
+   const bar=node('div');bar.className='real-trash-header';bar.append(node('strong','ワザを使う：'+(card.name||'ポケモン')));
+   const close=node('button','閉じる');close.onclick=()=>overlay.remove();bar.append(close);content.append(bar);
+   content.append(node('p','ついているエネルギー：'+energyList(card).length+'枚。ワザの必要エネルギー・効果はカード画像で確認してください。'));
+   if(attacks.length){
+    for(const move of attacks){
+     const name=typeof move==='string'?move:String(move.name||move.attackName||'ワザ');
+     const btn=node('button',name+'（使用を記録）');btn.type='button';
+     btn.onclick=()=>{if(!confirm('必要エネルギーとワザの条件を確認しましたか？\\n「'+name+'」を使ったことを記録します。'))return;attackUsedThisTurn=true;overlay.remove();render()};
+     content.append(btn);
+    }
+   }else{
+    content.append(node('p','このデッキデータにはワザ情報がないため、カード画像でワザを確認してください。'));
+    const btn=node('button','ワザ使用済みにする');btn.onclick=()=>{if(!confirm('ワザの必要エネルギーと条件を確認しましたか？'))return;attackUsedThisTurn=true;overlay.remove();render()};content.append(btn);
+   }
+   const note=node('p','※ 相手ポケモンへのダメージ・弱点・抵抗力・特殊効果はまだ自動計算されません。');
+   content.append(note);
+  };
+  const damage=node('button','ダメカンを管理（'+Number(card._damage||0)+'ダメージ）');
+  damage.onclick=()=>{
+   const answer=prompt('このポケモンの合計ダメージを入力（10単位、0以上）',String(Number(card._damage||0)));
+   if(answer===null)return;
+   const n=Number(answer);
+   if(!Number.isInteger(n)||n<0||n%10!==0){alert('ダメージは0以上の10単位で入力してください。');return}
+   card._damage=n;menu.remove();fieldMenu=null;render();
+  };
   const retreat=node('button','にげる');retreat.onclick=()=>{
    if(where!=='active'||!benchCards.length){alert('ベンチにポケモンが必要です。');return}
    const swap=benchCards.shift();benchCards.push(activeCard);activeCard=swap;menu.remove();render();
@@ -562,7 +594,7 @@ window.onlineSearch=async function(next=false){
    menu.remove();render();
   };
   const close=node('button','閉じる');close.onclick=()=>menu.remove();
-  menu.append(attack,retreat,move,close);
+  menu.append(attack,damage,retreat,move,close);
   const zone=document.querySelector('#battlePage .'+(where==='active'?'ref-own-active':'ref-own-bench'));
   zone?.append(menu);
  }
@@ -704,7 +736,7 @@ window.onlineSearch=async function(next=false){
    for(let i=0;i<count;i++)cards.push({...c,count:1});
   }
   if(cards.length!==60){alert('60枚のデッキのみ初手練習できます。');return}
-  handDialog.hidden=true;energyAttachedThisTurn=false;practiceTurn=1;currentDeck=d;remaining=shuffle(cards);hand=remaining.splice(-7);activeCard=null;benchCards=[];selectedIndex=null;usedCards=[];render();
+  handDialog.hidden=true;energyAttachedThisTurn=false;attackUsedThisTurn=false;practiceTurn=1;currentDeck=d;remaining=shuffle(cards);hand=remaining.splice(-7);activeCard=null;benchCards=[];selectedIndex=null;usedCards=[];render();
   panel.scrollIntoView({behavior:'smooth',block:'start'});
  }
  window.startOpeningHand=start;
@@ -1245,4 +1277,4 @@ window.addEventListener('load',fixDeckPicker);
 .real-energy-targets{width:min(80vw,600px);max-height:80vh;overflow:auto;display:flex;flex-direction:column;gap:12px}
 .real-energy-targets>strong{text-align:center}
 .real-energy-targets>button{align-self:center;padding:8px 20px}
-</style></html>
+</style><style id="attack-damage-practice-v1">#battlePage .real-play-card .real-damage-count{background:#ffdddd!important;color:#8b1724!important}</style></html>
