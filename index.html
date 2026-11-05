@@ -788,4 +788,27 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 else reposition();
 window.addEventListener('load',reposition);
 })();
+</script><style id="deck-picker-visible-fix-v2">
+#battlePage .future-mat.touch-board.ptcgl-reference{overflow:visible!important}
+#battlePage #openingDeckChoices{display:block!important;width:100%!important;max-width:1480px!important;margin:12px auto 22px!important;box-sizing:border-box!important;position:relative!important;z-index:5!important}
+#battlePage #openingDeckChoices .deck-picker-menu{display:flex;flex-wrap:wrap;gap:8px;padding:10px 0;max-height:none!important;overflow:visible!important}
+#battlePage #openingDeckChoices .deck-picker-menu[hidden]{display:none!important}
+#battlePage #openingDeckChoices .deck-picker-item{width:auto!important;min-width:180px!important;max-width:100%!important;white-space:normal!important}
+</style>
+<script id="deck-picker-visible-fix-v2-js">
+(function(){
+function fixDeckPicker(){
+ const page=document.getElementById('battlePage');
+ const picker=page&&page.querySelector('#openingDeckChoices');
+ const board=page&&page.querySelector('.ptcgl-reference');
+ if(!picker||!board||!board.parentElement)return;
+ // Outside the clipped grid, immediately after the board (and its bottom advice row).
+ if(picker.parentElement!==board.parentElement||picker.previousElementSibling!==board)board.after(picker);
+ const menu=picker.querySelector('.deck-picker-menu');
+ if(menu)menu.hidden=menu.hidden;
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',fixDeckPicker);
+else fixDeckPicker();
+window.addEventListener('load',fixDeckPicker);
+})();
 </script></html>
