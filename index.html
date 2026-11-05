@@ -323,7 +323,7 @@ window.onlineSearch=async function(next=false){
 </style>
 <script id="opening-hand-script">
 (function(){
- let currentDeck=null,remaining=[],hand=[],activeCard=null,benchCards=[],selectedIndex=null,usedCards=[];
+ let currentDeck=null,remaining=[],hand=[],activeCard=null,benchCards=[],selectedIndex=null,usedCards=[],dragState=null,suppressNextClick=false,fieldMenu=null;
  const panel=document.createElement('section');
  panel.id='openingHandPanel';panel.hidden=true;
  const host=document.createElement('div');host.id='openingHandHost';host.className='opening-hand-inline';
@@ -343,10 +343,8 @@ window.onlineSearch=async function(next=false){
   panel.replaceChildren();
   if(!currentDeck){panel.hidden=true;return}
   panel.hidden=false;
-  renderPlaced();
-  panel.append(node('h3',currentDeck.name+'｜手札'));
-  panel.append(node('p','バトル場 '+(activeCard?.name||'なし')+' ／ ベンチ '+benchCards.length+'/5'));
-  panel.append(node('p','手札 '+hand.length+'枚 ／ 山札 '+remaining.length+'枚'));
+  renderPlaced();enableDrops();
+
   const actions=node('div');actions.className='opening-hand-actions';
   const reset=node('button','シャッフルして7枚引く');reset.type='button';reset.onclick=()=>start(currentDeck.id);
   const draw=node('button','山札から1枚引く');draw.type='button';draw.disabled=!remaining.length;draw.onclick=()=>{hand.push(remaining.pop());render()};
@@ -356,7 +354,7 @@ window.onlineSearch=async function(next=false){
   const actionBar=node('div');actionBar.className='selected-card-actionbar';
   if(selectedIndex!==null&&hand[selectedIndex]){
    const selected=hand[selectedIndex];
-   actionBar.append(node('strong','選択中：'+(selected.name||'カード')));
+   actionBar.append(node('strong',selected.name||'カード'));
    const activeButton=node('button','バトル場へ');activeButton.type='button';activeButton.disabled=!!activeCard;activeButton.onclick=()=>placeReal(selectedIndex,'active');
    const benchButton=node('button','ベンチへ');benchButton.type='button';benchButton.disabled=benchCards.length>=5;benchButton.onclick=()=>placeReal(selectedIndex,'bench');
    const useButton=node('button','使用する');useButton.type='button';useButton.onclick=()=>useReal(selectedIndex);
@@ -373,16 +371,37 @@ window.onlineSearch=async function(next=false){
    card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label',(c.name||'カード')+'を選択。長押しで拡大');
    let holdTimer=null,holdTriggered=false,downX=0,downY=0;
    const clearHold=()=>{if(holdTimer!==null){clearTimeout(holdTimer);holdTimer=null}};
-   card.addEventListener('pointerdown',e=>{if(e.button!==0)return;holdTriggered=false;downX=e.clientX;downY=e.clientY;clearHold();holdTimer=setTimeout(()=>{holdTriggered=true;showPreview(c)},550)});
-   card.addEventListener('pointermove',e=>{if(Math.abs(e.clientX-downX)>12||Math.abs(e.clientY-downY)>12)clearHold()});
-   card.addEventListener('pointerup',clearHold);card.addEventListener('pointercancel',clearHold);card.addEventListener('pointerleave',clearHold);
-   card.addEventListener('click',()=>{if(holdTriggered){holdTriggered=false;return}selectedIndex=selectedIndex===index?null:index;render()});
+   card.addEventListener('pointerdown',e=>{
+    if(e.button!==0)return;
+    holdTriggered=false;downX=e.clientX;downY=e.clientY;clearHold();
+    dragState={index,card,startX:e.clientX,startY:e.clientY,moving:false};
+    holdTimer=setTimeout(()=>{if(!dragState?.moving){holdTriggered=true;dragState=null;showPreview(c)}},600);
+   });
+   card.addEventListener('pointermove',e=>{
+    if(Math.abs(e.clientX-downX)>12||Math.abs(e.clientY-downY)>12)clearHold();
+    if(dragState?.card===card&&Math.hypot(e.clientX-downX,e.clientY-downY)>14){dragState.moving=true;card.classList.add('dragging-real-card');}
+   });
+   card.addEventListener('pointerup',e=>{
+    clearHold();card.classList.remove('dragging-real-card');
+    if(dragState?.card===card&&dragState.moving){
+     const target=document.elementFromPoint(e.clientX,e.clientY);
+     const destination=target?.closest('.ref-own-active')?'active':target?.closest('.ref-own-bench')?'bench':null;
+     if(destination){placeReal(index,destination);suppressNextClick=true;}
+    }
+    dragState=null;
+   });
+   card.addEventListener('pointercancel',()=>{clearHold();dragState=null;card.classList.remove('dragging-real-card')});
+   card.addEventListener('pointerleave',clearHold);
+   card.draggable=true;
+   card.addEventListener('dragstart',e=>{clearHold();dragState=null;e.dataTransfer.setData('text/plain',String(index));e.dataTransfer.effectAllowed='move'});
+   card.addEventListener('dragend',()=>{card.classList.remove('dragging-real-card')});
+   card.addEventListener('click',()=>{if(suppressNextClick){suppressNextClick=false;return}if(holdTriggered){holdTriggered=false;return}selectedIndex=selectedIndex===index?null:index;render()});
    card.addEventListener('contextmenu',e=>{e.preventDefault();clearHold();showPreview(c)});
    card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();selectedIndex=index;render()}});
    grid.append(card);
   }
   panel.append(grid);
-  panel.append(node('p','※ タップで選択、長押しでカードを拡大。使用は効果を自動処理しません。たねポケモンの判定・進化・マリガンなどは未実装です。ポケモン以外は配置しないでください。'));
+
  }
  function renderPlaced(){
   const page=document.getElementById('battlePage');if(!page)return;
@@ -391,13 +410,49 @@ window.onlineSearch=async function(next=false){
    let area=zone.querySelector('#'+id);
    if(!area){area=node('div');area.id=id;area.className='real-play-area';zone.append(area)}
    area.replaceChildren();
-   for(const card of cards){
+   for(const [fieldIndex,card] of cards.entries()){
     const el=node('div');el.className='real-play-card';
     if(card.imageUrl){const img=node('img');img.src=card.imageUrl;img.alt=card.name||'カード';img.loading='lazy';img.referrerPolicy='no-referrer';el.append(img)}
-    el.append(node('span',card.name||'カード'));area.append(el);
+    el.title='タップで操作・長押しで拡大';el.tabIndex=0;el.setAttribute('role','button');
+    let timer=null,opened=false;
+    el.addEventListener('pointerdown',()=>{opened=false;timer=setTimeout(()=>{opened=true;showPreview(card)},600)});
+    for(const eventName of ['pointerup','pointerleave','pointercancel'])el.addEventListener(eventName,()=>clearTimeout(timer));
+    el.addEventListener('click',()=>{if(opened){opened=false;return}showFieldActions(card,zoneClass==='ref-own-active'?'active':'bench',fieldIndex)});
+    el.addEventListener('keydown',e=>{if(e.key==='Enter')showFieldActions(card,zoneClass==='ref-own-active'?'active':'bench',fieldIndex)});
+    area.append(el);
    }
   }
  }
+ function showFieldActions(card,where,index){
+  if(fieldMenu)fieldMenu.remove();
+  const menu=node('div');menu.className='real-field-menu';fieldMenu=menu;
+  menu.append(node('strong',card.name||'カード'));
+  const attack=node('button','ワザを使う');attack.onclick=()=>{alert('ワザの効果はまだ自動処理できません。');menu.remove()};
+  const retreat=node('button','にげる');retreat.onclick=()=>{
+   if(where!=='active'||!benchCards.length){alert('ベンチにポケモンが必要です。');return}
+   const swap=benchCards.shift();benchCards.push(activeCard);activeCard=swap;menu.remove();render();
+  };
+  retreat.disabled=where!=='active'||!benchCards.length;
+  const move=node('button',where==='active'?'ベンチへ':'バトル場へ');
+  move.onclick=()=>{
+   if(where==='active'){if(benchCards.length>=5){alert('ベンチは5枚までです');return}benchCards.push(activeCard);activeCard=null}
+   else{if(activeCard){alert('バトル場が空いていません');return}activeCard=benchCards.splice(index,1)[0]}
+   menu.remove();render();
+  };
+  const close=node('button','閉じる');close.onclick=()=>menu.remove();
+  menu.append(attack,retreat,move,close);
+  const zone=document.querySelector('#battlePage .'+(where==='active'?'ref-own-active':'ref-own-bench'));
+  zone?.append(menu);
+ }
+ function enableDrops(){
+  for(const [selector,where] of [['.ref-own-active','active'],['.ref-own-bench','bench']]){
+   const zone=document.querySelector('#battlePage '+selector);if(!zone||zone.dataset.realDropBound)return;
+   zone.dataset.realDropBound='1';
+   zone.addEventListener('dragover',e=>{if(e.dataTransfer?.types.includes('text/plain')){e.preventDefault();e.dataTransfer.dropEffect='move'}});
+   zone.addEventListener('drop',e=>{const raw=e.dataTransfer.getData('text/plain');if(!/^\\d+$/.test(raw))return;e.preventDefault();e.stopPropagation();placeReal(Number(raw),where)});
+  }
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',enableDrops);else setTimeout(enableDrops,0);
  function placeReal(index,where){
   const card=hand[index];if(!card)return;
   if(where==='active'&&activeCard)return;
@@ -893,4 +948,19 @@ window.addEventListener('load',fixDeckPicker);
 .real-card-preview-box img{display:block;max-width:100%;max-height:78vh;object-fit:contain}
 .real-card-preview-box img[hidden]{display:none}
 .real-card-preview-box button{align-self:flex-end}
+</style><style id="real-card-ptcgl-interactions-v3">
+#battlePage .ref-own-active>#realActiveCards{grid-column:2!important;grid-row:2!important;justify-self:center!important;align-self:center!important;z-index:3!important;margin:0!important}
+#battlePage .ref-own-active>#myField{display:none!important}
+#battlePage .ref-own-active>#realActiveCards .real-play-card{width:clamp(75px,10vw,120px)!important}
+#battlePage .ref-own-active>#realActiveCards .real-play-card img{width:100%!important}
+#battlePage .ref-own-bench .real-play-area{justify-content:center!important}
+#battlePage .real-play-card{cursor:pointer;touch-action:manipulation}
+#battlePage .real-play-card span{display:none!important}
+#battlePage .opening-hand-card{touch-action:none!important}
+#battlePage .opening-hand-card.dragging-real-card{opacity:.55;outline:3px solid #8e60d5}
+#battlePage .opening-hand-heading{display:none!important}
+#battlePage .selected-card-actionbar{position:sticky;bottom:8px;z-index:15;box-shadow:0 3px 12px #533c7a33}
+#battlePage .real-field-menu{grid-column:1/-1!important;display:flex;flex-wrap:wrap;justify-content:center;gap:6px;padding:10px;border:1px solid #bea4e8;border-radius:12px;background:#faf5ff;z-index:10}
+#battlePage .real-field-menu strong{width:100%;text-align:center}
+#battlePage .real-field-menu button{min-width:85px}
 </style></html>
