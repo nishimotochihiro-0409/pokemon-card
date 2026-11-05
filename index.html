@@ -766,4 +766,26 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 else positionCoach();
 window.addEventListener('load',positionCoach);
 })();
+</script><style id="deck-picker-below-advice-v1">
+#battlePage #openingDeckChoices{grid-column:1 / -1!important;width:100%!important;margin:10px 0 0!important}
+#battlePage #openingDeckChoices .deck-picker-toggle{max-width:360px}
+#battlePage .opening-hand-heading{margin-bottom:6px}
+</style>
+<script id="deck-picker-below-advice-v1-js">
+(function(){
+function reposition(){
+ const page=document.getElementById('battlePage');
+ const picker=page&&page.querySelector('#openingDeckChoices');
+ const advice=page&&page.querySelector('.coach-panel');
+ const board=page&&page.querySelector('.ptcgl-reference');
+ if(!picker||!advice||!board)return;
+ if(advice.parentElement!==board)board.appendChild(advice);
+ if(picker.parentElement!==board||picker.previousElementSibling!==advice)advice.after(picker);
+ picker.style.gridArea='auto';
+ picker.style.gridColumn='1 / -1';
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',reposition);
+else reposition();
+window.addEventListener('load',reposition);
+})();
 </script></html>
