@@ -500,9 +500,10 @@ move('+10ダメージ',damage);move('-10ダメージ',damage);
 left.append(picker);
 const note=document.createElement('div');note.className='touch-damage-readout';note.textContent='自分のポケモンを選択して操作';left.append(note);
 heading(right,'ワザ・コイン');
-move('攻撃を選ぶ',right);move('コイン表裏',right);move('エネルギー +1',right);
+move('エネルギー +1',left);
+move('攻撃を選ぶ',right);move('コイン表裏',right);
 const coinSlot=document.createElement('div');coinSlot.id='battleCoinSlot';coinSlot.style.cssText='display:flex;flex-direction:column;align-items:center;gap:5px;padding:5px';
-coinSlot.innerHTML='<div id="battleCoinDisk" style="width:58px;height:58px;border-radius:50%;border:4px solid #cfa64e;background:linear-gradient(135deg,#ffeaa1,#e7b94d);display:grid;place-items:center;font-size:22px;font-weight:bold;color:#6d4a18">表</div><strong id="battleCoinText" aria-live="polite" style="font-size:12px">コイン未使用</strong>';
+coinSlot.innerHTML='<div id="battleCoinDisk" class="pikachu-coin"><div class="pikachu-coin-front"><span class="pikachu-ear ear-left"></span><span class="pikachu-ear ear-right"></span><span class="pikachu-eye eye-left"></span><span class="pikachu-eye eye-right"></span><span class="pikachu-cheek cheek-left"></span><span class="pikachu-cheek cheek-right"></span><span class="pikachu-nose"></span><span class="pikachu-mouth"></span></div><div class="pikachu-coin-back"></div></div><strong id="battleCoinText" aria-live="polite" style="font-size:12px">コイン未使用</strong>';
 const coinButton=[...right.querySelectorAll('button')].find(x=>x.textContent.includes('コイン表裏'));
 if(coinButton){coinButton.textContent='コインを投げる';coinButton.after(coinSlot);}
 
@@ -699,7 +700,7 @@ window.flipCoin=function(){
  rotation+=180*(10+((target-next+2)%2));
  disk.style.transform='rotateY('+rotation+'deg)';
  const finish=()=>{
-  disk.textContent=result;label.textContent='結果：'+result;locked=false;
+  label.textContent='結果：'+result;locked=false;
   if(button)button.disabled=false;
   const old=document.getElementById('coinResult');if(old)old.textContent='';
   try{snapshot();msg('コイン：'+result);save();render()}catch(e){}
@@ -707,4 +708,21 @@ window.flipCoin=function(){
  setTimeout(finish,window.matchMedia('(prefers-reduced-motion: reduce)').matches?150:1750);
 };
 })();
-</script></html>
+</script><style id="pikachu-coin-faces-v3">
+#battlePage #battleCoinDisk.pikachu-coin{position:relative;width:64px!important;height:64px!important;border:0!important;border-radius:50%;background:none!important;box-shadow:none!important;transform-style:preserve-3d}
+#battlePage .pikachu-coin-front,#battlePage .pikachu-coin-back{position:absolute;inset:0;border-radius:50%;backface-visibility:hidden;-webkit-backface-visibility:hidden;border:4px solid #c79b32;box-sizing:border-box;box-shadow:0 3px 7px #513e5e66}
+#battlePage .pikachu-coin-front{background:radial-gradient(circle at 32% 22%,#fff8a4,#ffd941 65%,#e7a928)}
+#battlePage .pikachu-coin-back{transform:rotateY(180deg);background:radial-gradient(circle at 30% 22%,#555,#111 65%,#000);border-color:#555;box-shadow:inset 0 0 0 2px #999,0 3px 7px #513e5e66}
+#battlePage .pikachu-coin-front span{position:absolute;display:block}
+#battlePage .pikachu-ear{width:12px;height:25px;background:linear-gradient(#29201d 0 35%,#ffd83e 36%);border:2px solid #2c241b;border-radius:80% 80% 15% 15%;top:0;z-index:1}
+#battlePage .pikachu-ear.ear-left{left:10px;transform:rotate(-25deg)}
+#battlePage .pikachu-ear.ear-right{right:10px;transform:rotate(25deg)}
+#battlePage .pikachu-eye{width:8px;height:10px;background:#211a1a;border-radius:50%;top:25px}
+#battlePage .pikachu-eye.eye-left{left:14px}
+#battlePage .pikachu-eye.eye-right{right:14px}
+#battlePage .pikachu-cheek{width:13px;height:12px;background:#ef4e43;border-radius:50%;top:35px}
+#battlePage .pikachu-cheek.cheek-left{left:5px}
+#battlePage .pikachu-cheek.cheek-right{right:5px}
+#battlePage .pikachu-nose{width:6px;height:4px;background:#342323;border-radius:50%;top:36px;left:calc(50% - 3px)}
+#battlePage .pikachu-mouth{width:13px;height:7px;border-bottom:2px solid #51302b;border-radius:0 0 60% 60%;top:40px;left:calc(50% - 6px)}
+</style></html>
