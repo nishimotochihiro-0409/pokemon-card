@@ -363,17 +363,6 @@ window.onlineSearch=async function(next=false){
   const close=node('button','閉じる');close.type='button';close.onclick=()=>{currentDeck=null;activeCard=null;benchCards=[];selectedIndex=null;render()};
   actions.append(reset,draw,close);panel.append(actions);
   const grid=node('div');grid.className='opening-hand-grid';
-  const actionBar=node('div');actionBar.className='selected-card-actionbar';
-  if(selectedIndex!==null&&hand[selectedIndex]){
-   const selected=hand[selectedIndex];
-   actionBar.append(node('strong',selected.name||'カード'));
-   const activeButton=node('button','バトル場へ');activeButton.type='button';activeButton.disabled=!!activeCard||!isBasicPokemon(selected);activeButton.onclick=()=>placeReal(selectedIndex,'active');
-   const benchButton=node('button','ベンチへ');benchButton.type='button';benchButton.disabled=benchCards.length>=5||!isBasicPokemon(selected);benchButton.onclick=()=>placeReal(selectedIndex,'bench');
-   const useButton=node('button','使用する');useButton.type='button';useButton.onclick=()=>useReal(selectedIndex);
-   const cancelButton=node('button','キャンセル');cancelButton.type='button';cancelButton.onclick=()=>{selectedIndex=null;render()};
-   actionBar.append(activeButton,benchButton,useButton,cancelButton);
-   panel.append(actionBar);
-  }
   for(const [index,c] of hand.entries()){
    const card=node('div');card.className='opening-hand-card';
    if(c.imageUrl){const img=node('img');img.src=c.imageUrl;img.alt=c.name||'カード';img.loading='lazy';img.referrerPolicy='no-referrer';img.onerror=()=>{img.replaceWith(node('span','画像を表示できません'))};card.append(img)}
@@ -407,13 +396,32 @@ window.onlineSearch=async function(next=false){
    card.draggable=true;
    card.addEventListener('dragstart',e=>{clearHold();dragState=null;e.dataTransfer.setData('text/plain',String(index));e.dataTransfer.effectAllowed='move'});
    card.addEventListener('dragend',()=>{card.classList.remove('dragging-real-card')});
-   card.addEventListener('click',()=>{if(suppressNextClick){suppressNextClick=false;return}if(holdTriggered){holdTriggered=false;return}selectedIndex=selectedIndex===index?null:index;render()});
+   card.addEventListener('click',()=>{if(suppressNextClick){suppressNextClick=false;return}if(holdTriggered){holdTriggered=false;return}showHandActions(index)});
    card.addEventListener('contextmenu',e=>{e.preventDefault();clearHold();showPreview(c)});
-   card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();selectedIndex=index;render()}});
+   card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();showHandActions(index)}});
    grid.append(card);
   }
   panel.append(grid);
 
+ }
+ const handDialog=node('div');handDialog.className='real-hand-dialog';handDialog.hidden=true;
+ handDialog.setAttribute('role','dialog');handDialog.setAttribute('aria-modal','true');handDialog.setAttribute('aria-label','カード操作');
+ const handDialogBody=node('div');handDialogBody.className='real-hand-dialog-body';handDialog.append(handDialogBody);document.body.append(handDialog);
+ handDialog.addEventListener('click',e=>{if(e.target===handDialog)handDialog.hidden=true});
+ function showHandActions(index){
+  const card=hand[index];if(!card)return;
+  selectedIndex=index;handDialogBody.replaceChildren();
+  const imageWrap=node('div');imageWrap.className='real-hand-dialog-card';
+  if(card.imageUrl){const img=node('img');img.src=card.imageUrl;img.alt=card.name||'カード';imageWrap.append(img)}
+  imageWrap.append(node('strong',card.name||'カード'));
+  const options=node('div');options.className='real-hand-dialog-options';
+  const title=node('strong','このカードをどうする？');options.append(title);
+  const active=node('button','バトル場に出す');active.disabled=!!activeCard||!isBasicPokemon(card);active.onclick=()=>{handDialog.hidden=true;placeReal(index,'active')};
+  const bench=node('button','ベンチに出す');bench.disabled=benchCards.length>=5||!isBasicPokemon(card);bench.onclick=()=>{handDialog.hidden=true;placeReal(index,'bench')};
+  const use=node('button','使用する');use.onclick=()=>{handDialog.hidden=true;useReal(index)};
+  const cancel=node('button','戻る');cancel.onclick=()=>{handDialog.hidden=true;selectedIndex=null};
+  options.append(active,bench,use,cancel);handDialogBody.append(imageWrap,options);
+  handDialog.hidden=false;
  }
  function renderPlaced(){
   const page=document.getElementById('battlePage');if(!page)return;
@@ -486,7 +494,7 @@ window.onlineSearch=async function(next=false){
  const previewName=node('strong');
  previewBox.append(previewClose,previewImage,previewName);preview.append(previewBox);document.body.append(preview);
  preview.addEventListener('click',e=>{if(e.target===preview)preview.hidden=true});
- document.addEventListener('keydown',e=>{if(e.key==='Escape')preview.hidden=true});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'){preview.hidden=true;handDialog.hidden=true}});
  function showPreview(card){
   previewImage.src=card.imageUrl||'';previewImage.hidden=!card.imageUrl;
   previewName.textContent=card.name||'カード';preview.hidden=false;previewClose.focus();
@@ -503,7 +511,7 @@ window.onlineSearch=async function(next=false){
    for(let i=0;i<count;i++)cards.push({...c,count:1});
   }
   if(cards.length!==60){alert('60枚のデッキのみ初手練習できます。');return}
-  currentDeck=d;remaining=shuffle(cards);hand=remaining.splice(-7);activeCard=null;benchCards=[];selectedIndex=null;usedCards=[];render();
+  handDialog.hidden=true;currentDeck=d;remaining=shuffle(cards);hand=remaining.splice(-7);activeCard=null;benchCards=[];selectedIndex=null;usedCards=[];render();
   panel.scrollIntoView({behavior:'smooth',block:'start'});
  }
  window.startOpeningHand=start;
@@ -982,4 +990,17 @@ window.addEventListener('load',fixDeckPicker);
 #battlePage .ptcgl-reference .ref-own-active>#realActiveCards .real-play-card{width:95px!important}
 #battlePage .ptcgl-reference .ref-own-active>#realActiveCards .real-play-card img{width:100%!important}
 #battlePage .ptcgl-reference .ref-own-active>.left-tools,#battlePage .ptcgl-reference .ref-own-active>.right-tools{z-index:2}
+</style><style id="hand-centered-dialog-v5">
+.real-hand-dialog[hidden]{display:none!important}
+.real-hand-dialog{position:fixed;inset:0;z-index:99990;background:#191028b9;display:flex;align-items:center;justify-content:center;padding:18px;box-sizing:border-box}
+.real-hand-dialog-body{display:flex;align-items:center;justify-content:center;gap:20px;background:#f8f3ff;border:2px solid #bca0e9;border-radius:16px;padding:20px;max-width:min(94vw,670px);max-height:90vh;box-sizing:border-box}
+.real-hand-dialog-card{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:0;width:clamp(140px,25vw,270px)}
+.real-hand-dialog-card img{display:block;width:100%;max-height:70vh;object-fit:contain}
+.real-hand-dialog-card strong{font-size:13px;text-align:center}
+.real-hand-dialog-options{display:flex;flex-direction:column;gap:9px;width:clamp(120px,24vw,190px)}
+.real-hand-dialog-options>strong{font-size:14px;text-align:center}
+.real-hand-dialog-options button{min-height:42px;padding:9px;border-radius:9px;cursor:pointer}
+.real-hand-dialog-options button:disabled{opacity:.35;cursor:not-allowed}
+#battlePage .selected-card-actionbar{display:none!important}
+@media(max-width:480px){.real-hand-dialog-body{gap:10px;padding:12px}.real-hand-dialog-card{width:53%}.real-hand-dialog-options{width:43%}.real-hand-dialog-options button{font-size:12px;padding:6px}}
 </style></html>
