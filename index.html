@@ -576,11 +576,26 @@ window.onlineSearch=async function(next=false){
   };
   const damage=node('button','ダメカンを管理（'+Number(card._damage||0)+'ダメージ）');
   damage.onclick=()=>{
-   const answer=prompt('このポケモンの合計ダメージを入力（10単位、0以上）',String(Number(card._damage||0)));
-   if(answer===null)return;
-   const n=Number(answer);
-   if(!Number.isInteger(n)||n<0||n%10!==0){alert('ダメージは0以上の10単位で入力してください。');return}
-   card._damage=n;menu.remove();fieldMenu=null;render();
+   menu.remove();fieldMenu=null;
+   const overlay=node('div');overlay.className='real-effect-dialog real-damage-dialog';
+   const content=node('div');content.className='real-effect-content real-damage-panel';
+   overlay.append(content);document.body.append(overlay);
+   const bar=node('div');bar.className='real-trash-header';
+   bar.append(node('strong','ダメカン管理：'+(card.name||'ポケモン')));
+   const close=node('button','閉じる');close.type='button';close.onclick=()=>overlay.remove();bar.append(close);content.append(bar);
+   const total=node('div');total.className='real-damage-total';content.append(total);
+   const controls=node('div');controls.className='real-damage-controls';content.append(controls);
+   function update(delta){
+    card._damage=Math.max(0,Number(card._damage||0)+delta);
+    total.textContent=card._damage+' ダメージ';
+    render();
+   }
+   for(const [label,delta] of [['－50',-50],['－10',-10],['＋10',10],['＋50',50]]){
+    const btn=node('button',label);btn.type='button';btn.onclick=()=>update(delta);controls.append(btn);
+   }
+   const reset=node('button','0に戻す');reset.type='button';reset.onclick=()=>update(-Number(card._damage||0));content.append(reset);
+   total.textContent=Number(card._damage||0)+' ダメージ';
+   overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove()});
   };
   const retreat=node('button','にげる');retreat.onclick=()=>{
    if(where!=='active'||!benchCards.length){alert('ベンチにポケモンが必要です。');return}
@@ -1277,4 +1292,11 @@ window.addEventListener('load',fixDeckPicker);
 .real-energy-targets{width:min(80vw,600px);max-height:80vh;overflow:auto;display:flex;flex-direction:column;gap:12px}
 .real-energy-targets>strong{text-align:center}
 .real-energy-targets>button{align-self:center;padding:8px 20px}
-</style><style id="attack-damage-practice-v1">#battlePage .real-play-card .real-damage-count{background:#ffdddd!important;color:#8b1724!important}</style></html>
+</style><style id="attack-damage-practice-v1">#battlePage .real-play-card .real-damage-count{background:#ffdddd!important;color:#8b1724!important}</style><style id="damage-controls-fix-v1">
+.real-damage-dialog{z-index:100005!important}
+.real-damage-panel{max-width:440px;text-align:center}
+.real-damage-total{font-size:32px;font-weight:800;color:#b72c42;margin:20px 0}
+.real-damage-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 0}
+.real-damage-controls button{padding:14px 8px;font-size:18px;font-weight:700;border:2px solid #cbb7e5;border-radius:12px;background:white;color:#402d63;cursor:pointer}
+.real-damage-panel>button{background:#f8e2e6;border:1px solid #e4a9b3}
+</style></html>
