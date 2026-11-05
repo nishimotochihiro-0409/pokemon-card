@@ -363,9 +363,9 @@ window.onlineSearch=async function(next=false){
  function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=secureRandom(i+1);[arr[i],arr[j]]=[arr[j],arr[i]]}return arr}
  function render(){
   panel.replaceChildren();
-  if(!currentDeck){panel.hidden=true;renderPlaced();return}
+  if(!currentDeck){panel.hidden=true;renderPlaced();window.updateRealPileCounts?.('—',0);return}
   panel.hidden=false;
-  renderPlaced();enableDrops();
+  renderPlaced();enableDrops();window.updateRealPileCounts?.(remaining.length,usedCards.length);
 
   const actions=node('div');actions.className='opening-hand-actions';
   const reset=node('button','シャッフルして7枚引く');reset.type='button';reset.onclick=()=>start(currentDeck.id);
@@ -794,15 +794,22 @@ const opPrize=supply('ref-op-prize','相手サイド','6');
 const opDeck=supply('ref-op-deck','相手山札','—');
 const ownPrize=supply('ref-own-prize','自分サイド','6');
 const ownDeck=supply('ref-own-deck','自分山札','—');
+const ownTrash=supply('ref-own-trash','トラッシュ','0');
+const supplyColumn=document.createElement('div');supplyColumn.className='ref-own-piles';
+supplyColumn.append(ownDeck.element,ownTrash.element);
+window.updateRealPileCounts=function(deckCount,trashCount){
+ ownDeck.count.textContent=String(deckCount);
+ ownTrash.count.textContent=String(trashCount);
+};
 const center=document.createElement('div');center.className='ref-center';center.textContent='BATTLE';
-mat.replaceChildren(opPrize.element,opBench,opDeck.element,opActive,center,ownPrize.element,ownActive,ownDeck.element,ownBench,hand);
+mat.replaceChildren(opPrize.element,opBench,opDeck.element,opActive,center,ownPrize.element,ownActive,supplyColumn,ownBench,hand);
 mat.classList.add('ptcgl-reference');
 const oldRender=window.render;
 function refreshCounts(){try{
  opPrize.count.textContent=String(state.cpuPrize);
  opDeck.count.textContent=String(state.cpuDeck.length);
  ownPrize.count.textContent=String(state.prize);
- ownDeck.count.textContent=String(state.deck.length);
+ if(!document.querySelector('#openingHandPanel:not([hidden])'))ownDeck.count.textContent=String(state.deck.length);
 }catch(e){}}
 if(typeof oldRender==='function'){window.render=function(){oldRender();refreshCounts()}}
 refreshCounts();
@@ -1014,4 +1021,10 @@ window.addEventListener('load',fixDeckPicker);
 .real-hand-dialog-options button:disabled{opacity:.35;cursor:not-allowed}
 #battlePage .selected-card-actionbar{display:none!important}
 @media(max-width:480px){.real-hand-dialog-body{gap:10px;padding:12px}.real-hand-dialog-card{width:53%}.real-hand-dialog-options{width:43%}.real-hand-dialog-options button{font-size:12px;padding:6px}}
+</style><style id="own-deck-trash-stack-v1">
+#battlePage .ptcgl-reference .ref-own-piles{grid-area:pd!important;display:flex!important;flex-direction:column!important;align-self:stretch!important;gap:8px!important;min-width:0!important}
+#battlePage .ptcgl-reference .ref-own-piles>.ref-supply{flex:1 1 0!important;min-height:80px!important;width:100%!important;box-sizing:border-box!important}
+#battlePage .ptcgl-reference .ref-own-trash .ref-pile{background:#fff9ff!important;border:2px dashed #a08aba!important;box-shadow:none!important;position:relative}
+#battlePage .ptcgl-reference .ref-own-trash .ref-pile:after{content:'捨';position:absolute;inset:0;display:grid;place-items:center;color:#a08aba;font-size:20px;font-weight:bold}
+@media(max-width:650px){#battlePage .ptcgl-reference .ref-own-piles{gap:4px!important}#battlePage .ptcgl-reference .ref-own-piles>.ref-supply{min-height:68px!important;padding:3px 1px!important}}
 </style></html>
