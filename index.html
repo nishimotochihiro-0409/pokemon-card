@@ -744,4 +744,26 @@ window.flipCoin=function(){
 </style><style id="reference-coin-image-v6">
 #battlePage #battleCoinDisk .pikachu-coin-front{overflow:hidden!important;background:#080808!important;border:3px solid #cda83c!important}
 #battlePage #battleCoinDisk .pika-reference-image{display:block!important;width:100%!important;height:100%!important;object-fit:cover!important;border-radius:50%!important}
-</style></html>
+</style><style id="coach-full-width-v1">
+#battlePage .coach-panel{display:block!important;box-sizing:border-box!important;width:100%!important;max-width:none!important;min-width:0!important;flex:0 0 100%!important;grid-column:1 / -1!important;clear:both!important;margin:12px 0 0!important;padding:14px 18px!important;border-radius:14px!important}
+#battlePage .coach-panel strong{display:block!important;font-size:15px!important}
+#battlePage .coach-panel p{margin:7px 0 0!important;line-height:1.6!important;overflow-wrap:anywhere!important}
+#battlePage .board:has(.coach-panel){width:100%!important}
+</style>
+<script id="coach-full-width-v1-js">
+(function(){
+function positionCoach(){
+ const page=document.getElementById('battlePage');
+ if(!page)return;
+ const coach=page.querySelector('.coach-panel');
+ const mat=page.querySelector('.ptcgl-reference');
+ if(!coach||!mat)return;
+ if(coach.parentElement!==mat)mat.appendChild(coach);
+ coach.style.gridArea='auto';
+ coach.style.gridColumn='1 / -1';
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',positionCoach);
+else positionCoach();
+window.addEventListener('load',positionCoach);
+})();
+</script></html>
