@@ -505,11 +505,35 @@ window.onlineSearch=async function(next=false){
  const previewName=node('strong');
  previewBox.append(previewClose,previewImage,previewName);preview.append(previewBox);document.body.append(preview);
  preview.addEventListener('click',e=>{if(e.target===preview)preview.hidden=true});
- document.addEventListener('keydown',e=>{if(e.key==='Escape'){preview.hidden=true;handDialog.hidden=true}});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'){preview.hidden=true;handDialog.hidden=true;trashDialog.hidden=true}});
  function showPreview(card){
   previewImage.src=card.imageUrl||'';previewImage.hidden=!card.imageUrl;
   previewName.textContent=card.name||'カード';preview.hidden=false;previewClose.focus();
  }
+ const trashDialog=node('div');trashDialog.className='real-trash-dialog';trashDialog.hidden=true;
+ trashDialog.setAttribute('role','dialog');trashDialog.setAttribute('aria-modal','true');trashDialog.setAttribute('aria-label','トラッシュを見る');
+ const trashContent=node('div');trashContent.className='real-trash-content';trashDialog.append(trashContent);document.body.append(trashDialog);
+ trashDialog.addEventListener('click',e=>{if(e.target===trashDialog)trashDialog.hidden=true});
+ window.showRealTrashPile=function(){
+  trashContent.replaceChildren();
+  const header=node('div');header.className='real-trash-header';
+  header.append(node('strong','トラッシュ（'+usedCards.length+'枚）'));
+  const close=node('button','閉じる ×');close.type='button';close.onclick=()=>trashDialog.hidden=true;header.append(close);
+  trashContent.append(header);
+  if(!usedCards.length){trashContent.append(node('p','トラッシュにはまだカードがありません。'))}
+  else{
+   const grid=node('div');grid.className='real-trash-grid';
+   for(const card of usedCards){
+    const item=node('button');item.type='button';item.className='real-trash-card';
+    if(card.imageUrl){const img=node('img');img.src=card.imageUrl;img.alt=card.name||'カード';img.loading='lazy';item.append(img)}
+    item.append(node('span',card.name||'カード'));
+    item.onclick=()=>showPreview(card);
+    grid.append(item);
+   }
+   trashContent.append(grid);
+  }
+  trashDialog.hidden=false;
+ };
  function start(id){
   let decks;
   try{decks=JSON.parse(localStorage.getItem('pokemon-card-user-decks-v1')||'[]')}catch(e){decks=[]}
@@ -795,6 +819,9 @@ const opDeck=supply('ref-op-deck','相手山札','—');
 const ownPrize=supply('ref-own-prize','自分サイド','6');
 const ownDeck=supply('ref-own-deck','自分山札','—');
 const ownTrash=supply('ref-own-trash','トラッシュ','0');
+ownTrash.element.tabIndex=0;ownTrash.element.setAttribute('role','button');ownTrash.element.setAttribute('aria-label','トラッシュのカードを見る');
+ownTrash.element.addEventListener('click',()=>window.showRealTrashPile?.());
+ownTrash.element.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();window.showRealTrashPile?.()}});
 const supplyColumn=document.createElement('div');supplyColumn.className='ref-own-piles';
 supplyColumn.append(ownDeck.element,ownTrash.element);
 window.updateRealPileCounts=function(deckCount,trashCount){
@@ -1027,4 +1054,17 @@ window.addEventListener('load',fixDeckPicker);
 #battlePage .ptcgl-reference .ref-own-trash .ref-pile{background:#fff9ff!important;border:2px dashed #a08aba!important;box-shadow:none!important;position:relative}
 #battlePage .ptcgl-reference .ref-own-trash .ref-pile:after{content:'捨';position:absolute;inset:0;display:grid;place-items:center;color:#a08aba;font-size:20px;font-weight:bold}
 @media(max-width:650px){#battlePage .ptcgl-reference .ref-own-piles{gap:4px!important}#battlePage .ptcgl-reference .ref-own-piles>.ref-supply{min-height:68px!important;padding:3px 1px!important}}
+</style><style id="trash-viewer-v1">
+#battlePage .ref-own-trash{cursor:pointer!important}
+#battlePage .ref-own-trash:focus-visible{outline:3px solid #6d4de1!important;outline-offset:3px}
+.real-trash-dialog[hidden]{display:none!important}
+.real-trash-dialog{position:fixed;inset:0;z-index:99995;background:#191028b9;display:flex;justify-content:center;align-items:center;padding:14px;box-sizing:border-box}
+.real-trash-content{background:#f8f3ff;border:2px solid #bca0e9;border-radius:16px;padding:16px;width:min(94vw,750px);max-height:85vh;overflow:auto;box-sizing:border-box}
+.real-trash-header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+.real-trash-header strong{font-size:18px}
+.real-trash-header button{padding:8px 12px;border-radius:8px}
+.real-trash-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(95px,1fr));gap:12px}
+.real-trash-card{border:1px solid #d7c4ee;border-radius:9px;background:white;padding:5px;cursor:pointer;min-width:0}
+.real-trash-card img{display:block;width:100%;aspect-ratio:0.72;object-fit:contain}
+.real-trash-card span{display:block;font-size:11px;overflow-wrap:anywhere}
 </style></html>
