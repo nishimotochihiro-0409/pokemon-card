@@ -533,16 +533,28 @@ window.onlineSearch=async function(next=false){
    content.append(proceed);
   }
   function showSearch(){
-   header('山札からポケモンを1枚選ぶ','ポケモンを1枚選ぶか、見つからなかったことにして終了できます。');
+   header('山札をすべて確認（'+remaining.length+'枚）','サイド落ち確認用に山札の全カードを表示しています。ハイパーボールで手札に加えられるのはポケモン1枚だけです。');
+   const summary=node('div');summary.className='real-deck-summary';
+   const grouped=new Map();
+   for(const card of remaining){const key=String(card.cardId||card.id||card.name||'不明');if(!grouped.has(key))grouped.set(key,{card,count:0});grouped.get(key).count++}
+   summary.append(node('strong','山札内のカード：'+remaining.length+'枚 / '+grouped.size+'種類'));
+   content.append(summary);
    const grid=node('div');grid.className='real-trash-grid';
-   const candidates=remaining.map((card,i)=>({card,i})).filter(x=>pokemonStage(x.card)!=='not-pokemon');
-   for(const {card,i} of candidates)grid.append(cardButton(card,card.name,()=>{
-    hand.push(remaining.splice(i,1)[0]);remaining=shuffle(remaining);close();render();
-   }));
+   for(const {card,count} of [...grouped.values()].sort((a,b)=>String(a.card.category||'').localeCompare(String(b.card.category||''),'ja')||String(a.card.name||'').localeCompare(String(b.card.name||''),'ja'))){
+    const eligible=pokemonStage(card)!=='not-pokemon';
+    const item=cardButton(card,(card.name||'カード')+' ×'+count+(eligible?' ／ 選択可':' ／ 確認のみ'),()=>{
+     if(!eligible)return;
+     const index=remaining.findIndex(x=>String(x.cardId||x.id||x.name)===String(card.cardId||card.id||card.name));
+     if(index<0)return;
+     hand.push(remaining.splice(index,1)[0]);remaining=shuffle(remaining);close();render();
+    });
+    if(!eligible){item.disabled=true;item.classList.add('view-only')}
+    grid.append(item);
+   }
    content.append(grid);
    const skip=node('button','選ばずに終了（山札をシャッフル）');
    skip.onclick=()=>{remaining=shuffle(remaining);close();render()};content.append(skip);
-   if(!candidates.length)content.append(node('p','山札にポケモンがありません。'));
+   if(!remaining.some(x=>pokemonStage(x)!=='not-pokemon'))content.append(node('p','山札に選べるポケモンがありません。'));
    render();
   }
   chooseDiscard();
@@ -1132,4 +1144,8 @@ window.addEventListener('load',fixDeckPicker);
 .real-effect-card.is-picked{border:3px solid #6b40dd;background:#e9dcff}
 .real-effect-content>button{display:block;margin:12px auto 0;min-height:40px;padding:8px 16px;border-radius:9px}
 .real-effect-content>button:disabled{opacity:.4}
+</style><style id="full-deck-inspection-v1">
+.real-deck-summary{margin:8px 0;font-size:13px}
+.real-effect-card.view-only{opacity:.85;cursor:default;background:#f4f1f7}
+.real-effect-card:disabled{color:inherit}
 </style></html>
